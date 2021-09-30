@@ -13,6 +13,10 @@ The official implementation was not released by the authors.
 
 See `examples` for usage.
 
+##  License
+
+MIT
+
 
 ## Contribute
 
