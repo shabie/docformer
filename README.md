@@ -17,6 +17,10 @@ See `examples` for usage.
 
 MIT
 
+## Maintainers
+
+- [uakarsh](https://github.com/uakarsh)
+- [shabie](https://github.com/shabie)
 
 ## Contribute
 
