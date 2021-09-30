@@ -1,0 +1,15 @@
+site_name: Docformer
+site_url: https://shabie.github.io/docformer
+copyright: MIT
+theme:
+  name: "material"
+  palette:
+    primary: "red"
+    accent: "red"
+
+repo_name: shabie/docformer
+repo_url: https://github.com/shabie/docformer
+
+
+nav:
+    - Home: index.md

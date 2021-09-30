@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+. scripts/env
+
+set -x
+
+${PREFIX}mkdocs "$@"
