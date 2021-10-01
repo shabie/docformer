@@ -7,7 +7,7 @@ setup(
   license='MIT',
   description = 'DocFormer: End-to-End Transformer for Document Understanding',
   author = 'Akarsh Upadhay, Shabie Iqbal',
-  author_email = '[add email], shabieiqbal@gmail.com',
+  author_email = 'akarshupadhyayabc@gmail.com, shabieiqbal@gmail.com',
   url = 'https://github.com/shabie/docformer',
   keywords = [
     'artificial intelligence',
