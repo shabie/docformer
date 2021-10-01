@@ -545,4 +545,4 @@ class DocFormer(nn.Module):
         output = self.encoder(features['t_bar'], features['v_bar'], features['t_bar_s'], features['v_bar_s'])
         output = self.dropout(output)
         output = self.classifier(output)
-        return out
+        return output
