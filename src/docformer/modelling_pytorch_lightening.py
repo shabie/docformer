@@ -679,10 +679,10 @@ class Model(pl.LightningModule):
     b,size,classes = logits.shape
     criterion = torch.nn.CrossEntropyLoss()
     loss = criterion(logits.transpose(2,1), batch["mlm_labels"].long())
-    val_acc = 100*(torch.argmax(logits,dim = -1)==batch["mlm_labels"].long()).float().sum()/(logits.shape[0]*logits.shape[1])
-    val_acc = torch.tensor(val_acc)
+#     val_acc = 100*(torch.argmax(logits,dim = -1)==batch["mlm_labels"].long()).float().sum()/(logits.shape[0]*logits.shape[1])
+#     val_acc = torch.tensor(val_acc)
     self.log("val_loss", loss, prog_bar=True)
-    self.log("val_acc", val_acc, prog_bar=True)
+#     self.log("val_acc", val_acc, prog_bar=True)
 
   def configure_optimizers(self):
         return torch.optim.AdamW(self.parameters(), lr=self.hparams["lr"])
