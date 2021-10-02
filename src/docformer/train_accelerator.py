@@ -1,4 +1,32 @@
+## Dependencies
+
 from accelerate import Accelerator
+import pytesseract
+import math
+import numpy as np
+import torch
+from torch.utils.data import Dataset, DataLoader
+from PIL import Image
+import json
+import numpy as np
+from torchvision.transforms import ToTensor
+import torch.nn.functional as F
+
+import torch
+import torch.nn as nn
+import torchvision.models as models
+from torch.autograd import Variable
+from collections import OrderedDict
+import torch.nn.functional as F
+from einops import rearrange
+from einops import rearrange as rearr
+
+from sklearn.model_selection import train_test_split as tts
+import warnings
+warnings.filterwarnings("ignore")
+
+# Integrating with Hugging face Accelerator
+
 accelerator = Accelerator()
 
 # Function for the training data loader
