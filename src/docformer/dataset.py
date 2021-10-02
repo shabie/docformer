@@ -318,5 +318,4 @@ def createPickelFile(image,pathToSave,tokenizer=None,target_size = 224,max_seq_l
 
 
 ## images -> list, which contains the address of each image
-
-output = list(map(lambda x:createPickelFile(x,pathToSave),images))
+#output = list(map(lambda x:createPickelFile(x,pathToSave),images))
