@@ -61,7 +61,7 @@ def eval_fn(data_loader, model,criterion, device):
     return log #['total_loss']
 
 ## Combining everything
-date = '30Sept'
+date = ''
 def run(epochs,path):
     logger = Logger(f'{path}/logs')
     model = AssembleDocFormer(config).to(device)
