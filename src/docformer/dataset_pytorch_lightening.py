@@ -9,26 +9,24 @@ import json
 import numpy as np
 from torchvision.transforms import ToTensor
 import torch.nn.functional as F
-
 import torch
 import torch.nn as nn
 import torchvision.models as models
 from torch.autograd import Variable
 from collections import OrderedDict
 import torch.nn.functional as F
-
+import pickle
+import pytorch_lightning as pl
+from transformers import AutoTokenizer,AutoModel
 from sklearn.model_selection import train_test_split as tts
 import warnings
 
-pathToPickleFile = 'RVL-CDIP-PickleFiles/'
-entries = os.listdir(pathToPickleFile)
+# pathToPickleFile = 'RVL-CDIP-PickleFiles/'
+# entries = os.listdir(pathToPickleFile)
 
 """## Base Dataset"""
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-import pickle
-import pytorch_lightning as pl
 class RVLCDIPDatset(Dataset):
     def __init__(
         self,
@@ -50,14 +48,11 @@ class RVLCDIPDatset(Dataset):
             encoding[i] = encoding[i].to(device)
         return encoding
 
-train_entries,val_entries = tts(entries,test_size = 0.2)
-train_dataset = RVLCDIPDatset(train_entries,pathToPickleFile)
-val_dataset = RVLCDIPDatset(val_entries,pathToPickleFile)
+# train_entries,val_entries = tts(entries,test_size = 0.2)
+# train_dataset = RVLCDIPDatset(train_entries,pathToPickleFile)
+# val_dataset = RVLCDIPDatset(val_entries,pathToPickleFile)
 
 """## DataModules"""
-
-from transformers import AutoTokenizer,AutoModel
-import pytorch_lightning as pl
 
 class DataModule(pl.LightningDataModule):
       def __init__(self,train_entries,val_entries,pathToPickleFile,batch_size = 4):
