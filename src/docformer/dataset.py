@@ -221,7 +221,7 @@ def apply_mask(inputs):
             # create random array of floats in equal dimension to input_ids
             rand = torch.rand(inputs.shape)
             # where the random array is less than 0.15, we set true
-            mask_arr = (rand < 0.15) * (inputs != 101) * (inputs != 102)
+            mask_arr = (rand < 0.15) * (inputs != 101) * (inputs != 102)*(inputs!=0)
             # create selection from mask_arr
             selection = torch.flatten((mask_arr).nonzero()).tolist()
             # apply selection index to inputs.input_ids, adding MASK tokens
@@ -257,8 +257,8 @@ def createPickelFile(image,label,pathToSave,tokenizer=None,target_size = 224,max
             unnormalized_token_boxes = unnormalized_token_boxes[: (max_seq_length - special_tokens_count)]
  
         # add bounding boxes and labels of cls + sep tokens
-        token_boxes = [[0, 0, 0, 0]] + token_boxes + [[1000, 1000, 1000, 1000]]
-        unnormalized_token_boxes = [[0, 0, 0, 0]] + unnormalized_token_boxes + [[1000, 1000, 1000, 1000]]
+        token_boxes = [[0, 0, 0, 0]] + token_boxes + [[0,0, 0, 0]]
+        unnormalized_token_boxes = [[0, 0, 0, 0]] + unnormalized_token_boxes + [[0, 0, 0, 0]]
  
         encoding = tokenizer(' '.join(words), padding='max_length', truncation=True)
 
@@ -307,6 +307,10 @@ def createPickelFile(image,label,pathToSave,tokenizer=None,target_size = 224,max
         a_rel_x, a_rel_y = get_relative_distance(actual_bbox, centroid, index)
         encoding['unnormalized_token_boxes'] = unnormalized_token_boxes
         
+        encoding['input_ids']*=(encoding['input_ids']!=102)    # Remvoing the SEP token
+        encoding['mlm_labels']*=(encoding['mlm_labels']!=102)
+            
+            
         # finally, convert everything to PyTorch tensors 
         for k, v in encoding.items():
           try:
