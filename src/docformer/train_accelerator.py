@@ -49,9 +49,8 @@ def train_fn(data_loader,model,criterion,optimizer,epoch,device,scheduler = None
     model.train()
     accelerator = Accelerator()
     model,optimizer,data_loader = accelerator.prepare(model,optimizer,data_loader)
-    loop = tqdm(data_loader, leave=True)
     log = None
-    for batch in loop:
+    for batch in tqdm(data_loader):
         
         input_ids = batch['input_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
