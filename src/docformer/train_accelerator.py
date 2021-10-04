@@ -47,7 +47,8 @@ class Logger:
 # Function for the training data loader
 def train_fn(data_loader,model,criterion,optimizer,epoch,device,scheduler = None):
     model.train()
-    model,optimizer,data_loader = accelerate.prepare(model,optimizer,data_loader)
+    accelerator = Accelerator()
+    model,optimizer,data_loader = accelerator.prepare(model,optimizer,data_loader)
     loop = tqdm(data_loader, leave=True)
     log = None
     for batch in loop:
@@ -66,7 +67,7 @@ def train_fn(data_loader,model,criterion,optimizer,epoch,device,scheduler = None
         
         total_loss = ce_loss
         optimizer.zero_grad()
-        accelerate.backward(total_loss)
+        accelerator.backward(total_loss)
         optimizer.step()
         
         if scheduler is not None:
