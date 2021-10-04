@@ -90,7 +90,7 @@ def eval_fn(data_loader, model,criterion, device):
 
 ## Combining everything
 date = ''
-def run(epochs,path):
+def run(train_dataloader,valid_dataloader,device,epochs,path):
     logger = Logger(f'{path}/logs')
     model = AssembleDocFormer(config).to(device)
     criterion = nn.CrossEntropyLoss()
