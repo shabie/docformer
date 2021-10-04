@@ -10,6 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import json
 import numpy as np
+from tqdm.auto import tqdm
 from torchvision.transforms import ToTensor
 import torch.nn.functional as F
 import torch
@@ -48,7 +49,6 @@ def train_fn(data_loader,model,criterion,optimizer,epoch,device,scheduler = None
     model.train()
     accelerator = Accelerator()
     model,optimizer,data_loader = accelerator.prepare(model,optimizer,data_loader)
-    import tqdm
     loop = tqdm(data_loader, leave=True)
     log = None
     for batch in loop:
