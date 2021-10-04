@@ -90,9 +90,8 @@ def eval_fn(data_loader, model,criterion, device):
 
 ## Combining everything
 date = ''
-def run(train_dataloader,valid_dataloader,device,epochs,path):
+def run(model,train_dataloader,valid_dataloader,device,epochs,path):
     logger = Logger(f'{path}/logs')
-    model = AssembleDocFormer(config).to(device)
     criterion = nn.CrossEntropyLoss()
     criterion = criterion.to(device)
     optimizer = torch.optim.AdamW(model.parameters(),lr = lr)
