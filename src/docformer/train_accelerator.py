@@ -12,7 +12,7 @@ import json
 import numpy as np
 from torchvision.transforms import ToTensor
 import torch.nn.functional as F
-
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torchvision.models as models
