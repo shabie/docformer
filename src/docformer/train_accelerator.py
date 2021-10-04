@@ -12,7 +12,6 @@ import json
 import numpy as np
 from torchvision.transforms import ToTensor
 import torch.nn.functional as F
-from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -49,6 +48,7 @@ def train_fn(data_loader,model,criterion,optimizer,epoch,device,scheduler = None
     model.train()
     accelerator = Accelerator()
     model,optimizer,data_loader = accelerator.prepare(model,optimizer,data_loader)
+    import tqdm
     loop = tqdm(data_loader, leave=True)
     log = None
     for batch in loop:
