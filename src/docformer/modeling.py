@@ -8,6 +8,8 @@ import math
 from einops import rearrange
 
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
@@ -400,10 +402,10 @@ class MultiModalAttentionLayer(nn.Module):
 
         # self attention of text
         # b -> batch, t -> time steps (l -> length has same meaning), head -> # of heads, k -> head dim.
-        key_text_nh = rearrange(self.fc_k_text(text_feat), 'b t (head k) -> head b t k', head=self.n_heads)
-        query_text_nh = rearrange(self.fc_q_text(text_feat), 'b l (head k) -> head b l k', head=self.n_heads)
-        value_text_nh = rearrange(self.fc_v_text(text_feat), 'b t (head k) -> head b t k', head=self.n_heads)
-        dots_text = torch.einsum('hblk,hbtk->hblt', query_text_nh, key_text_nh) / self.scale
+        key_text_nh = rearrange(self.fc_k_text(text_feat), 'b t (head k) -> head b t k', head=self.n_heads).to(device)
+        query_text_nh = rearrange(self.fc_q_text(text_feat), 'b l (head k) -> head b l k', head=self.n_heads).to(device)
+        value_text_nh = rearrange(self.fc_v_text(text_feat), 'b t (head k) -> head b t k', head=self.n_heads).to(device)
+        dots_text = torch.einsum('hblk,hbtk->hblt', query_text_nh, key_text_nh) / self.scale.to(device)
 
         # 1D relative positions (query, key)
         rel_pos_embed_text = self.relative_positions_text(seq_length, seq_length)
@@ -413,18 +415,18 @@ class MultiModalAttentionLayer(nn.Module):
         # shared spatial <-> text hidden features
         key_spatial_text = self.fc_k_spatial(text_spatial_feat)
         query_spatial_text = self.fc_q_spatial(text_spatial_feat)
-        key_spatial_text_nh = rearrange(key_spatial_text, 'b t (head k) -> head b t k', head=self.n_heads)
-        query_spatial_text_nh = rearrange(query_spatial_text, 'b l (head k) -> head b l k', head=self.n_heads)
-        dots_text_spatial = torch.einsum('hblk,hbtk->hblt',  query_spatial_text_nh, key_spatial_text_nh) / self.scale
+        key_spatial_text_nh = rearrange(key_spatial_text, 'b t (head k) -> head b t k', head=self.n_heads).to(device)
+        query_spatial_text_nh = rearrange(query_spatial_text, 'b l (head k) -> head b l k', head=self.n_heads).to(device)
+        dots_text_spatial = torch.einsum('hblk,hbtk->hblt',  query_spatial_text_nh, key_spatial_text_nh) / self.scale.to(device)
 
         # Line 38 of pseudo-code
         text_attn_scores = dots_text + rel_pos_key_text + rel_pos_query_text + dots_text_spatial
 
         # self-attention of image
-        key_img_nh = rearrange(self.fc_k_img(img_feat), 'b t (head k) -> head b t k', head=self.n_heads)
-        query_img_nh = rearrange(self.fc_q_img(img_feat), 'b l (head k) -> head b l k', head=self.n_heads)
-        value_img_nh = rearrange(self.fc_v_img(img_feat), 'b t (head k) -> head b t k', head=self.n_heads)
-        dots_img = torch.einsum('hblk,hbtk->hblt', query_img_nh, key_img_nh) / self.scale
+        key_img_nh = rearrange(self.fc_k_img(img_feat), 'b t (head k) -> head b t k', head=self.n_heads).to(device)
+        query_img_nh = rearrange(self.fc_q_img(img_feat), 'b l (head k) -> head b l k', head=self.n_heads).to(device)
+        value_img_nh = rearrange(self.fc_v_img(img_feat), 'b t (head k) -> head b t k', head=self.n_heads).to(device)
+        dots_img = torch.einsum('hblk,hbtk->hblt', query_img_nh, key_img_nh) / self.scale.to(device)
 
         # 1D relative positions (query, key)
         rel_pos_embed_img = self.relative_positions_img(seq_length, seq_length)
@@ -434,9 +436,9 @@ class MultiModalAttentionLayer(nn.Module):
         # shared spatial <-> image features
         key_spatial_img = self.fc_k_spatial(img_spatial_feat)
         query_spatial_img = self.fc_q_spatial(img_spatial_feat)
-        key_spatial_img_nh = rearrange(key_spatial_img, 'b t (head k) -> head b t k', head=self.n_heads)
-        query_spatial_img_nh = rearrange(query_spatial_img, 'b l (head k) -> head b l k', head=self.n_heads)
-        dots_img_spatial = torch.einsum('hblk,hbtk->hblt',  query_spatial_img_nh, key_spatial_img_nh) / self.scale
+        key_spatial_img_nh = rearrange(key_spatial_img, 'b t (head k) -> head b t k', head=self.n_heads).to(device)
+        query_spatial_img_nh = rearrange(query_spatial_img, 'b l (head k) -> head b l k', head=self.n_heads).to(device)
+        dots_img_spatial = torch.einsum('hblk,hbtk->hblt',  query_spatial_img_nh, key_spatial_img_nh) / self.scale.to(device)
 
         # Line 59 of pseudo-code
         img_attn_scores = dots_img + rel_pos_key_img + rel_pos_query_img + dots_img_spatial
