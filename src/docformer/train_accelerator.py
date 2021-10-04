@@ -106,7 +106,7 @@ def eval_fn(data_loader, model,criterion, device):
 
 ## Combining everything
 date = ''
-def run(model,train_dataloader,valid_dataloader,device,epochs,path):
+def run(model,lr = 5e-5,train_dataloader,valid_dataloader,device,epochs,path):
     logger = Logger(f'{path}/logs')
     criterion = nn.CrossEntropyLoss()
     criterion = criterion.to(device)
