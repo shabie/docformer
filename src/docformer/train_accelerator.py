@@ -1,6 +1,7 @@
 ## Dependencies
 
 from accelerate import Accelerator
+import accelerate
 import pytesseract
 import math
 import numpy as np
