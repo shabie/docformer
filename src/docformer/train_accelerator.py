@@ -29,6 +29,22 @@ warnings.filterwarnings("ignore")
 
 accelerator = Accelerator()
 
+
+## Loggers
+class Logger:
+    def __init__(self,filename,format='csv'):
+        self.filename = filename + '.' + format
+        self._log = []
+        self.format = format
+    def save(self,log,epoch=None):
+        log['epoch'] = epoch+1
+        self._log.append(log)
+        if self.format == 'json':
+            with open(self.filename,'w') as f:
+                json.dump(self._log,f)
+        else:
+            pd.DataFrame(self._log).to_csv(self.filename,index=False)
+
 # Function for the training data loader
 def train_fn(data_loader,model,criterion,optimizer,epoch,device,scheduler = None):
     model.train()
