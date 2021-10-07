@@ -7,67 +7,54 @@
 # !pip install -q einops
 
 import math
-import numpy as np
-import os
-import torch
-from torch.utils.data import Dataset, DataLoader
-from PIL import Image
-import pickle
-import json
-import numpy as np
-from torchvision.transforms import ToTensor
-import torch.nn.functional as F
 
+import numpy as np
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import torchvision.models as models
-from torch.autograd import Variable
-from collections import OrderedDict
 import torch.nn.functional as F
-from transformers import AutoTokenizer,AutoModel
+import torchvision.models as models
+from PIL import Image
 from sklearn.model_selection import train_test_split as tts
-import warnings
-import pickle
-import pytorch_lightning as pl
+from torch.autograd import Variable
+from torch.utils.data import DataLoader, Dataset
+from torchvision.transforms import ToTensor
+from transformers import AutoModel, AutoTokenizer
 
 # pathToPickleFile = 'RVL-CDIP-PickleFiles/'
 # entries = os.listdir(pathToPickleFile)
 
 """## Base Dataset"""
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 """## Base Model"""
 
 config = {
-  "coordinate_size": 96,
-  "hidden_dropout_prob": 0.1,
-  "hidden_size": 768,
-  "image_feature_pool_shape": [
-    7,
-    7,
-    256
-  ],
-  "intermediate_ff_size_factor": 3,  # default ought to be 4
-  "max_2d_position_embeddings": 1024,
-  "max_position_embeddings": 512,
-  "max_relative_positions": 8,
-  "num_attention_heads": 12,
-  "num_hidden_layers": 12,
-  "pad_token_id": 0,
-  "shape_size": 96,
-  "vocab_size": 30522,
-  "layer_norm_eps": 1e-12,
+    "coordinate_size": 96,
+    "hidden_dropout_prob": 0.1,
+    "hidden_size": 768,
+    "image_feature_pool_shape": [7, 7, 256],
+    "intermediate_ff_size_factor": 3,  # default ought to be 4
+    "max_2d_position_embeddings": 1024,
+    "max_position_embeddings": 512,
+    "max_relative_positions": 8,
+    "num_attention_heads": 12,
+    "num_hidden_layers": 12,
+    "pad_token_id": 0,
+    "shape_size": 96,
+    "vocab_size": 30522,
+    "layer_norm_eps": 1e-12,
 }
+
+import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
 import torchvision.models as models
-
-import math
 from einops import rearrange
+from torch import Tensor
 
 
 class PositionalEncoding(nn.Module):
@@ -109,10 +96,10 @@ class ResNetFeatureExtractor(nn.Module):
         x = self.resnet50(x)
         x = self.conv1(x)
         x = self.relu1(x)
-        x = rearrange(x, 'b e width height -> b e (width height)')
+        x = rearrange(x, "b e width height -> b e (width height)")
         x = self.linear1(x)
-        x = rearrange(x, 'b e seqlen -> b seqlen e')
-        return x    
+        x = rearrange(x, "b e seqlen -> b seqlen e")
+        return x
 
 
 class DocFormerEmbeddings(nn.Module):
@@ -610,6 +597,8 @@ class DocFormer(nn.Module):
         return output
 
 from sklearn.metrics import accuracy_score
+
+
 class Model(pl.LightningModule):
   def __init__(self,config,num_classes,lr = 5e-5):
     super().__init__()

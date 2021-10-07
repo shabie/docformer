@@ -1,11 +1,11 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
 import torchvision.models as models
-
-import math
 from einops import rearrange
+from torch import Tensor
 
 
 device = 'cuda'
@@ -26,10 +26,6 @@ class PositionalEncoding(nn.Module):
         self.register_buffer("pe", pe)
 
     def forward(self) -> Tensor:
-        """
-        Args:
-            x: Tensor, shape [batch_size,seq_len, embedding_dim]
-        """
         x = self.pe[0, : self.max_len]
         return self.dropout(x).unsqueeze(0)
 
@@ -49,10 +45,10 @@ class ResNetFeatureExtractor(nn.Module):
         x = self.resnet50(x)
         x = self.conv1(x)
         x = self.relu1(x)
-        x = rearrange(x, 'b e width height -> b e (width height)')
+        x = rearrange(x, "b e width height -> b e (width height)")
         x = self.linear1(x)
-        x = rearrange(x, 'b e seqlen -> b seqlen e')
-        return x    
+        x = rearrange(x, "b e seqlen -> b seqlen e")
+        return x
 
 
 class DocFormerEmbeddings(nn.Module):
@@ -234,7 +230,6 @@ class DocFormerEmbeddings(nn.Module):
         y_calculated_embedding_v = []
 
         for i in range(8):
-
             temp_x = x_feature[:, :, i]  # Shape (batch_size, seq_len)
             x_calculated_embedding_v.append(x_embedding_v[i](temp_x.long()))
             temp_y = y_feature[:, :, i]
@@ -243,11 +238,11 @@ class DocFormerEmbeddings(nn.Module):
         x_calculated_embedding_v = torch.cat(x_calculated_embedding_v, dim=-1)
         y_calculated_embedding_v = torch.cat(y_calculated_embedding_v, dim=-1)
 
-        ## Adding the positional encoding and the calculated_embedding_v
+        # Adding the positional encoding and the calculated_embedding_v
         v_bar_s = (
-            x_calculated_embedding_v
-            + y_calculated_embedding_v
-            + self.position_embeddings_v()
+                x_calculated_embedding_v
+                + y_calculated_embedding_v
+                + self.position_embeddings_v()
         )
 
         x_embedding_t = [
@@ -276,7 +271,6 @@ class DocFormerEmbeddings(nn.Module):
         y_calculated_embedding_t = []
 
         for i in range(8):
-
             temp_x = x_feature[:, :, i]  # (batch_size, seq_len)
             x_calculated_embedding_t.append(x_embedding_t[i](temp_x.long()))
             temp_y = y_feature[:, :, i]
@@ -286,9 +280,9 @@ class DocFormerEmbeddings(nn.Module):
         y_calculated_embedding_t = torch.cat(y_calculated_embedding_t, dim=-1)
 
         t_bar_s = (
-            x_calculated_embedding_t
-            + y_calculated_embedding_t
-            + self.position_embeddings_t()
+                x_calculated_embedding_t
+                + y_calculated_embedding_t
+                + self.position_embeddings_t()
         )
 
         return v_bar_s, t_bar_s
@@ -297,35 +291,35 @@ class DocFormerEmbeddings(nn.Module):
 # fmt: off
 class PreNorm(nn.Module):
     def __init__(self, dim, fn):
-        
         # Fig 1: http://proceedings.mlr.press/v119/xiong20b/xiong20b.pdf
         super().__init__()
         self.norm = nn.LayerNorm(dim)
         self.fn = fn
+
     def forward(self, x, **kwargs):
         return self.fn(self.norm(x), **kwargs)
 
+
 class PreNormAttn(nn.Module):
     def __init__(self, dim, fn):
-        
         # Fig 1: http://proceedings.mlr.press/v119/xiong20b/xiong20b.pdf
         super().__init__()
-        
+
         self.norm_t_bar = nn.LayerNorm(dim)
         self.norm_v_bar = nn.LayerNorm(dim)
         self.norm_t_bar_s = nn.LayerNorm(dim)
         self.norm_v_bar_s = nn.LayerNorm(dim)
         self.fn = fn
-        
+
     def forward(self, t_bar, v_bar, t_bar_s, v_bar_s, **kwargs):
         return self.fn(self.norm_t_bar(t_bar),
                        self.norm_v_bar(v_bar),
                        self.norm_t_bar_s(t_bar_s),
                        self.norm_v_bar_s(v_bar_s), **kwargs)
-    
+
 
 class FeedForward(nn.Module):
-    def __init__(self, dim, hidden_dim, dropout = 0.):
+    def __init__(self, dim, hidden_dim, dropout=0.):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(dim, hidden_dim),
@@ -334,6 +328,7 @@ class FeedForward(nn.Module):
             nn.Linear(hidden_dim, dim),
             nn.Dropout(dropout)
         )
+
     def forward(self, x):
         return self.net(x)
 
@@ -384,7 +379,7 @@ class MultiModalAttentionLayer(nn.Module):
         # spatial qk embeddings (shared for visual and text)
         self.fc_k_spatial = nn.Linear(embed_dim, embed_dim)
         self.fc_q_spatial = nn.Linear(embed_dim, embed_dim)
-        
+
         self.dropout = nn.Dropout(dropout)
 
         self.to_out = nn.Sequential(
@@ -415,9 +410,9 @@ class MultiModalAttentionLayer(nn.Module):
         # shared spatial <-> text hidden features
         key_spatial_text = self.fc_k_spatial(text_spatial_feat)
         query_spatial_text = self.fc_q_spatial(text_spatial_feat)
-        key_spatial_text_nh = rearrange(key_spatial_text, 'b t (head k) -> head b t k', head=self.n_heads).to(device)
-        query_spatial_text_nh = rearrange(query_spatial_text, 'b l (head k) -> head b l k', head=self.n_heads).to(device)
-        dots_text_spatial = torch.einsum('hblk,hbtk->hblt',  query_spatial_text_nh, key_spatial_text_nh) / self.scale.to(device)
+        key_spatial_text_nh = rearrange(key_spatial_text, 'b t (head k) -> head b t k', head=self.n_heads)
+        query_spatial_text_nh = rearrange(query_spatial_text, 'b l (head k) -> head b l k', head=self.n_heads)
+        dots_text_spatial = torch.einsum('hblk,hbtk->hblt', query_spatial_text_nh, key_spatial_text_nh) / self.scale
 
         # Line 38 of pseudo-code
         text_attn_scores = dots_text + rel_pos_key_text + rel_pos_query_text + dots_text_spatial
@@ -436,9 +431,9 @@ class MultiModalAttentionLayer(nn.Module):
         # shared spatial <-> image features
         key_spatial_img = self.fc_k_spatial(img_spatial_feat)
         query_spatial_img = self.fc_q_spatial(img_spatial_feat)
-        key_spatial_img_nh = rearrange(key_spatial_img, 'b t (head k) -> head b t k', head=self.n_heads).to(device)
-        query_spatial_img_nh = rearrange(query_spatial_img, 'b l (head k) -> head b l k', head=self.n_heads).to(device)
-        dots_img_spatial = torch.einsum('hblk,hbtk->hblt',  query_spatial_img_nh, key_spatial_img_nh) / self.scale.to(device)
+        key_spatial_img_nh = rearrange(key_spatial_img, 'b t (head k) -> head b t k', head=self.n_heads)
+        query_spatial_img_nh = rearrange(query_spatial_img, 'b l (head k) -> head b l k', head=self.n_heads)
+        dots_img_spatial = torch.einsum('hblk,hbtk->hblt', query_spatial_img_nh, key_spatial_img_nh) / self.scale
 
         # Line 59 of pseudo-code
         img_attn_scores = dots_img + rel_pos_key_img + rel_pos_query_img + dots_img_spatial
@@ -453,7 +448,6 @@ class MultiModalAttentionLayer(nn.Module):
 
         embeddings = rearrange(context, 'head b t d -> b t (head d)')
         return self.to_out(embeddings)
-    
 
 
 class DocFormerEncoder(nn.Module):
@@ -463,61 +457,60 @@ class DocFormerEncoder(nn.Module):
         self.layers = nn.ModuleList([])
         for _ in range(config['num_hidden_layers']):
             encoder_block = nn.ModuleList([
-                    PreNormAttn(config['hidden_size'], 
+                PreNormAttn(config['hidden_size'],
                             MultiModalAttentionLayer(config['hidden_size'],
                                                      config['num_attention_heads'],
                                                      config['max_relative_positions'],
                                                      config['max_position_embeddings'],
                                                      config['hidden_dropout_prob'],
-                                                    )
-                           ),
-                    PreNorm(config['hidden_size'],
-                            FeedForward(config['hidden_size'],
-                                        config['hidden_size'] * config['intermediate_ff_size_factor'],
-                                        dropout = config['hidden_dropout_prob']))
+                                                     )
+                            ),
+                PreNorm(config['hidden_size'],
+                        FeedForward(config['hidden_size'],
+                                    config['hidden_size'] * config['intermediate_ff_size_factor'],
+                                    dropout=config['hidden_dropout_prob']))
             ])
             self.layers.append(encoder_block)
 
     def forward(
-        self, 
-        text_feat,  # text feat or output from last encoder block
-        img_feat,
-        text_spatial_feat,
-        img_spatial_feat,
+            self,
+            text_feat,  # text feat or output from last encoder block
+            img_feat,
+            text_spatial_feat,
+            img_spatial_feat,
     ):
         # Fig 1 encoder part (skip conn for both attn & FF): https://arxiv.org/abs/1706.03762
         # TODO: ensure 1st skip conn (var "skip") in such a multimodal setting makes sense (most likely does)
         for attn, ff in self.layers:
-                skip = text_feat + img_feat + text_spatial_feat + img_spatial_feat
-                x = attn(text_feat, img_feat, text_spatial_feat, img_spatial_feat) + skip
-                x = ff(x) + x
-                text_feat  = x
-        return x   
+            skip = text_feat + img_feat + text_spatial_feat + img_spatial_feat
+            x = attn(text_feat, img_feat, text_spatial_feat, img_spatial_feat) + skip
+            x = ff(x) + x
+            text_feat = x
+        return x
 
-    
+
 class LanguageFeatureExtractor(nn.Module):
     def __init__(self, max_vocab_size, hidden_dim):
         super().__init__()
-        self.embedding_vector = nn.Embedding(max_vocab_size,hidden_dim)
+        self.embedding_vector = nn.Embedding(max_vocab_size, hidden_dim)
+
     def forward(self, x):
         return self.embedding_vector(x)
 
 
 class ExtractFeatures(nn.Module):
-
     '''
     Inputs: dictionary
     Output: v_bar, t_bar, v_bar_s, t_bar_s
-
     '''
 
-    def __init__(self,config):
+    def __init__(self, config):
         super().__init__()
         self.visual_feature = ResNetFeatureExtractor()
         self.language_feature = LanguageFeatureExtractor(config['vocab_size'], config['hidden_size'])
         self.spatial_feature = DocFormerEmbeddings(config)
 
-    def forward(self,encoding):
+    def forward(self, encoding):
         image = encoding['resized_image']
         language = encoding['input_ids']
         x_feature = encoding['x_features']
@@ -538,10 +531,9 @@ class DocFormer(nn.Module):
         self.dropout = nn.Dropout(config['hidden_dropout_prob'])
         self.classifier = nn.Linear(config['hidden_size'], num_classes)
 
-
     def forward(self, x):
         v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x)
-        features = {'v_bar':v_bar, 't_bar':t_bar,'v_bar_s':v_bar_s,'t_bar_s':t_bar_s}
+        features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
         for f in features:
             features[f] = features[f]
         output = self.encoder(features['t_bar'], features['v_bar'], features['t_bar_s'], features['v_bar_s'])
