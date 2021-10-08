@@ -230,10 +230,22 @@ class DocFormerEmbeddings(nn.Module):
         y_calculated_embedding_v = []
 
         for i in range(8):
-            temp_x = x_feature[:, :, i]  # Shape (batch_size, seq_len)
-            x_calculated_embedding_v.append(x_embedding_v[i](temp_x.long()))
-            temp_y = y_feature[:, :, i]
-            y_calculated_embedding_v.append(y_embedding_v[i](temp_y.long()))
+            if i<=2:
+                    temp_x = x_feature[:, :, i]  # Shape (batch_size, seq_len)
+                    x_calculated_embedding_v.append(x_embedding_v[i](temp_x.long()))
+                    temp_y = y_feature[:, :, i]
+                    y_calculated_embedding_v.append(y_embedding_v[i](temp_y.long()))
+            else:
+                
+                ## Clamping the values
+                    temp_x = x_feature[:, :, i]  # Shape (batch_size, seq_len)
+                    temp_x = torch.clamp(temp_x,-self.config["max_2d_position_embeddings"],self.config["max_2d_position_embeddings"])
+                    temp_x+=self.config["max_2d_position_embeddings"]
+                    x_calculated_embedding_v.append(x_embedding_v[i](temp_x.long()))
+                    temp_y = y_feature[:, :, i]
+                    temp_y = torch.clamp(temp_y,-self.config["max_2d_position_embeddings"],self.config["max_2d_position_embeddings"])
+                    temp_y+=self.config["max_2d_position_embeddings"]
+                    y_calculated_embedding_v.append(y_embedding_v[i](temp_y.long()))
 
         x_calculated_embedding_v = torch.cat(x_calculated_embedding_v, dim=-1)
         y_calculated_embedding_v = torch.cat(y_calculated_embedding_v, dim=-1)
