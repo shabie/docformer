@@ -111,7 +111,7 @@ def eval_fn(data_loader, model, criterion, device):
 date = '8Oct'
 
 
-def run(config,train_dataloader,val_dataloader,device,epochs,path,classes):
+def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5e-5):
     logger = Logger(f"{path}/logs")
     model = DocFormer(config,classes).to(device)
     criterion = nn.CrossEntropyLoss()
