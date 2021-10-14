@@ -38,6 +38,7 @@ class RVLCDIPDatset(Dataset):
             encoding = pickle.load(sample)
         for i in list(encoding.keys()):
             encoding[i] = encoding[i].to(device)
+        encoding['resized_image']/=255
         return encoding
 
 
