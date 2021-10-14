@@ -62,7 +62,7 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
 
         # process
         outputs = model(batch)
-        ce_loss = criterion(outputs, labels)
+        ce_loss = criterion(outputs.transpose(1,2), labels)
 
         if log is None:
             log = {"ce_loss": ce_loss}
@@ -94,7 +94,7 @@ def eval_fn(data_loader, model, criterion, device):
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["labels"].to(device)
             output = model(batch)
-            ce_loss = criterion(output, labels)
+            ce_loss = criterion(output.transpose(1,2), labels)
 
             if log is None:
                 log = {"ce_loss": ce_loss}
