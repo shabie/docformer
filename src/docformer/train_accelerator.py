@@ -3,6 +3,7 @@
 from accelerate import Accelerator
 import accelerate
 import pytesseract
+import torchmetrics
 import math
 import numpy as np
 import torch
@@ -53,12 +54,13 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
     model, optimizer, data_loader = accelerator.prepare(model, optimizer, data_loader)
     loop = tqdm(data_loader, leave=True)
     log = None
+    train_acc = torchmetrics.Accuracy()
     loop = tqdm(data_loader)
     for batch in loop:
 
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
-        labels = batch["labels"].to(device)
+        labels = batch["mlm_labels"].to(device)
 
         # process
         outputs = model(batch)
@@ -67,6 +69,7 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
         if log is None:
             log = {"ce_loss": ce_loss}
             log["total_loss"] = AverageMeter()
+            log['accuracy'] = AverageMeter()
 
         total_loss = ce_loss
         optimizer.zero_grad()
@@ -77,6 +80,7 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
             scheduler.step()
 
         log["total_loss"].update(total_loss.item(), batch_size)
+        log['accuracy'].update(train_acc(labels,torch.argmax(outputs,1))
         loop.set_postfix({k: v.avg for k, v in log.items()})
 
     return log
@@ -86,6 +90,7 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
 def eval_fn(data_loader, model, criterion, device):
     model.eval()
     log = None
+    val_acc = torchmetrics.Accuracy()                     
     with torch.no_grad():
         loop = tqdm(data_loader, total=len(data_loader), leave=True)
         for batch in loop:
@@ -99,16 +104,19 @@ def eval_fn(data_loader, model, criterion, device):
             if log is None:
                 log = {"ce_loss": ce_loss}
                 log["total_loss"] = AverageMeter()
+                log['accuracy'] = AverageMeter()
 
             for k, v in loss_dict.items():
                 log[k].update(v.item(), batch_size)
 
             total_loss = ce_loss
             log["total_loss"].update(total_loss.item(), batch_size)
+            log['accuracy'].update(val_acc(labels,torch.argmax(outputs,1))
+                               
             loop.set_postfix({k: v.avg for k, v in log.items()})
     return log  # ['total_loss']
 
-date = '8Oct'
+date = '16Oct'
 
 
 def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5e-5):
