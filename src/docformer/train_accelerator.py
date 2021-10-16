@@ -80,7 +80,7 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
             scheduler.step()
 
         log["total_loss"].update(total_loss.item(), batch_size)
-        log['accuracy'].update(train_acc(labels,torch.argmax(outputs,1))
+        log['accuracy'].update(train_acc(labels,torch.argmax(outputs,1)))
         loop.set_postfix({k: v.avg for k, v in log.items()})
 
     return log
@@ -111,7 +111,7 @@ def eval_fn(data_loader, model, criterion, device):
 
             total_loss = ce_loss
             log["total_loss"].update(total_loss.item(), batch_size)
-            log['accuracy'].update(val_acc(labels,torch.argmax(outputs,1))
+            log['accuracy'].update(val_acc(labels,torch.argmax(outputs,1)))
                                
             loop.set_postfix({k: v.avg for k, v in log.items()})
     return log  # ['total_loss']
