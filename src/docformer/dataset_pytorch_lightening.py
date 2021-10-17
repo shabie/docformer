@@ -37,7 +37,10 @@ class RVLCDIPDatset(Dataset):
             encoding = pickle.load(sample)
         for i in list(encoding.keys()):
             encoding[i] = encoding[i].to(device)
-            
+        encoding['x_features'] = torch.clamp(encoding['x_features'],-1024,1024)
+        encoding['x_features']+=1024
+        encoding['y_features'] = torch.clamp(encoding['y_features'],-1024,1024)
+        encoding['y_features']+=1024
         ## The image stored in the pickle file is not nromalized, so normalizing it
         encoding['resized_image']/=255.0
         return encoding
