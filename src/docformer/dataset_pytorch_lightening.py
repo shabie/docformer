@@ -2,7 +2,6 @@ import os
 import pickle
 
 import numpy as np
-import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,27 +46,3 @@ class RVLCDIPDatset(Dataset):
 # train_entries,val_entries = tts(entries,test_size = 0.2)
 # train_dataset = RVLCDIPDatset(train_entries,pathToPickleFile)
 # val_dataset = RVLCDIPDatset(val_entries,pathToPickleFile)
-
-"""## DataModules"""
-
-
-class DataModule(pl.LightningDataModule):
-    def __init__(self, train_entries, val_entries, pathToPickleFile, batch_size=4):
-        super().__init__()
-        self.batch_size = batch_size
-        self.train_entries = train_entries
-        self.val_entries = val_entries
-
-    def setup(self, stage=None):
-        self.train_dataset = RVLCDIPDatset(self.train_entries, pathToPickleFile)
-        self.val_dataset = RVLCDIPDatset(self.val_entries, pathToPickleFile)
-
-    def train_dataloader(self):
-        return torch.utils.data.DataLoader(
-            self.train_dataset, batch_size=self.batch_size, shuffle=True
-        )
-
-    def val_dataloader(self):
-        return torch.utils.data.DataLoader(
-            self.val_dataset, batch_size=self.batch_size, shuffle=False
-        )
