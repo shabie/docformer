@@ -37,6 +37,11 @@ class RVLCDIPDatset(Dataset):
             encoding = pickle.load(sample)
         for i in list(encoding.keys()):
             encoding[i] = encoding[i].to(device)
+            
+        del encoding['category_labels']
+        del encoding['numeric_labels']
+        del encoding['target_bbox']
+        del encoding['resized_and_aligned_target_bbox']
         encoding['x_features'] = torch.clamp(encoding['x_features'],-1024,1024)
         encoding['x_features']+=1024
         encoding['y_features'] = torch.clamp(encoding['y_features'],-1024,1024)
