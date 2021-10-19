@@ -45,6 +45,7 @@ config = {
     "shape_size": 96,
     "vocab_size": 30522,
     "layer_norm_eps": 1e-12,
+    "batch_size":9
 }
 
 import math
