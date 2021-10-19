@@ -88,7 +88,7 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
         ce_loss = criterion(outputs.transpose(1,2), labels)
 
         if log is None:
-            log = {"ce_loss": ce_loss}
+            log["ce_loss"] = AverageMeter()
             log["total_loss"] = AverageMeter()
             log['accuracy'] = AverageMeter()
 
@@ -102,8 +102,7 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
 
         log["total_loss"].update(total_loss.item(), batch_size)
         log['accuracy'].update(train_acc(labels.cpu(),torch.argmax(outputs,-1).cpu()).item(),batch_size)
-        for i,j in log.items():
-               print(i,j)
+        log['ce_loss'].update(ce_loss.item())
         loop.set_postfix({k: v.avg for k, v in log.items()})
 
     return log
@@ -125,7 +124,7 @@ def eval_fn(data_loader, model, criterion, device):
             ce_loss = criterion(output.transpose(1,2), labels)
 
             if log is None:
-                log = {"ce_loss": ce_loss}
+                log["ce_loss"] = AverageMeter()
                 log["total_loss"] = AverageMeter()
                 log['accuracy'] = AverageMeter()
 
@@ -135,7 +134,7 @@ def eval_fn(data_loader, model, criterion, device):
             total_loss = ce_loss
             log["total_loss"].update(total_loss.item(), batch_size)
             log['accuracy'].update(val_acc(labels.cpu(),torch.argmax(outputs,-1).cpu()).item(),batch_size)
-                               
+            log['ce_loss'].update(ce_loss.item())
             loop.set_postfix({k: v.avg for k, v in log.items()})
     return log  # ['total_loss']
 
