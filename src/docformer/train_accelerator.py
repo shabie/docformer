@@ -89,18 +89,15 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
 
         if log is None:
             log["ce_loss"] = AverageMeter()
-            log["total_loss"] = AverageMeter()
             log['accuracy'] = AverageMeter()
 
-        total_loss = ce_loss
         optimizer.zero_grad()
-        accelerator.backward(total_loss)
+        accelerator.backward(ce_loss)
         optimizer.step()
 
         if scheduler is not None:
             scheduler.step()
 
-        log["total_loss"].update(total_loss.item(), batch_size)
         log['accuracy'].update(train_acc(labels.cpu(),torch.argmax(outputs,-1).cpu()).item(),batch_size)
         log['ce_loss'].update(ce_loss.item())
         loop.set_postfix({k: v.avg for k, v in log.items()})
@@ -125,14 +122,11 @@ def eval_fn(data_loader, model, criterion, device):
 
             if log is None:
                 log["ce_loss"] = AverageMeter()
-                log["total_loss"] = AverageMeter()
                 log['accuracy'] = AverageMeter()
 
             for k, v in loss_dict.items():
                 log[k].update(v.item(), batch_size)
 
-            total_loss = ce_loss
-            log["total_loss"].update(total_loss.item(), batch_size)
             log['accuracy'].update(val_acc(labels.cpu(),torch.argmax(outputs,-1).cpu()).item(),batch_size)
             log['ce_loss'].update(ce_loss.item())
             loop.set_postfix({k: v.avg for k, v in log.items()})
