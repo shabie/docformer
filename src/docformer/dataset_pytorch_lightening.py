@@ -22,9 +22,10 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class RVLCDIPDatset(Dataset):
-    def __init__(self, entries, pathToPickleFile):
+    def __init__(self, entries, pathToPickleFile,colab= False):
         self.pathToPickleFile = pathToPickleFile
         self.entries = entries
+        self.colab = colab
 
     def __len__(self):
         return len(self.entries)
@@ -35,7 +36,7 @@ class RVLCDIPDatset(Dataset):
 
         with open(encoding, "rb") as sample:
             encoding = pickle.load(sample)
-        if 'category_labels' in list(encoding.keys()):  # Using for the pretraining task
+        if not self.colab:  # Using for the pretraining task
             del encoding['category_labels']
             del encoding['numeric_labels']
             del encoding['target_bbox']
