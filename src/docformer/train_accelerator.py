@@ -102,6 +102,8 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
 
         log["total_loss"].update(total_loss.item(), batch_size)
         log['accuracy'].update(train_acc(labels.cpu(),torch.argmax(outputs,-1).cpu()).item(),batch_size)
+        for i,j in log.items():
+               print(i,j)
         loop.set_postfix({k: v.avg for k, v in log.items()})
 
     return log
