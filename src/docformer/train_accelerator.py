@@ -88,6 +88,7 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
         ce_loss = criterion(outputs.transpose(1,2), labels)
 
         if log is None:
+            log = {}
             log["ce_loss"] = AverageMeter()
             log['accuracy'] = AverageMeter()
 
@@ -121,6 +122,7 @@ def eval_fn(data_loader, model, criterion, device):
             ce_loss = criterion(output.transpose(1,2), labels)
 
             if log is None:
+                log = {}
                 log["ce_loss"] = AverageMeter()
                 log['accuracy'] = AverageMeter()
 
