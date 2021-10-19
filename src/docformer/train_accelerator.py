@@ -30,6 +30,8 @@ from torchvision.transforms import ToTensor
 
 from modeling import DocFormer
 
+batch_size = 9
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self):
@@ -146,6 +148,7 @@ def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
     best_val_loss = 1e9
     header_printed = False
+    batch_size = config['batch_size']
     for epoch in range(epochs):
         train_log = train_fn(
             train_dataloader, model, criterion, optimizer, epoch, device, scheduler=None
