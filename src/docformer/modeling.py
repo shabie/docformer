@@ -83,11 +83,11 @@ class DocFormerEmbeddings(nn.Module):
         self.x_topleft_position_embeddings_v = nn.Embedding(config['max_2d_position_embeddings'], config['coordinate_size'])
         self.x_bottomright_position_embeddings_v = nn.Embedding(config['max_2d_position_embeddings'], config['coordinate_size'])
         self.w_position_embeddings_v = nn.Embedding(config['max_2d_position_embeddings'], config['shape_size'])
-        self.x_topleft_distance_to_prev_embeddings_v = nn.Embedding(config['max_2d_position_embeddings'] , config['shape_size'])
-        self.x_bottomleft_distance_to_prev_embeddings_v = nn.Embedding(config['max_2d_position_embeddings'], config['shape_size'])
-        self.x_topright_distance_to_prev_embeddings_v = nn.Embedding(config['max_2d_position_embeddings'], config['shape_size'])
-        self.x_bottomright_distance_to_prev_embeddings_v = nn.Embedding(config['max_2d_position_embeddings'], config['shape_size'])
-        self.x_centroid_distance_to_prev_embeddings_v = nn.Embedding(config['max_2d_position_embeddings'], config['shape_size'])
+        self.x_topleft_distance_to_prev_embeddings_v = nn.Embedding(2*config['max_2d_position_embeddings']+1, config['shape_size'])
+        self.x_bottomleft_distance_to_prev_embeddings_v = nn.Embedding(2*config['max_2d_position_embeddings']+1, config['shape_size'])
+        self.x_topright_distance_to_prev_embeddings_v = nn.Embedding(2*config['max_2d_position_embeddings']+1, config['shape_size'])
+        self.x_bottomright_distance_to_prev_embeddings_v = nn.Embedding(2*config['max_2d_position_embeddings']+1, config['shape_size'])
+        self.x_centroid_distance_to_prev_embeddings_v = nn.Embedding(2*config['max_2d_position_embeddings']+1, config['shape_size'])
 
         # typical size of embedding matrix: 1000 (normalized + discretized coordinate space) x 96
         # Why 96? Because 96 * 8 = 768 since these will be concatenated
