@@ -35,11 +35,11 @@ class RVLCDIPDatset(Dataset):
 
         with open(encoding, "rb") as sample:
             encoding = pickle.load(sample)
-
-        del encoding['category_labels']
-        del encoding['numeric_labels']
-        del encoding['target_bbox']
-        del encoding['resized_and_aligned_target_bbox']
+        try:
+            del encoding['category_labels']
+            del encoding['numeric_labels']
+            del encoding['target_bbox']
+            del encoding['resized_and_aligned_target_bbox']
         for i in list(encoding.keys()):
             encoding[i] = encoding[i].to(device)
             
