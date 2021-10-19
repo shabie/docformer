@@ -66,7 +66,7 @@ def seed_everything(seed):
     torch.backends.cudnn.benchmark = True
 
 seed_everything(seed)
-marking = pd.read_csv('new_publaynet.csv')     # A CSV file, which contains the bbox for each image and its category
+marking = pd.read_csv('rvl_cdip_dataset.csv')     # A CSV file, which contains the bbox for each image and its category
 bboxs = np.stack(marking['bbox'].apply(lambda x: np.fromstring(x[1:-1], sep=',')))
 for i, column in enumerate(['x1', 'y1', 'x2', 'y2']):
    marking[column] = bboxs[:,i]
