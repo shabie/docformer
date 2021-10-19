@@ -30,6 +30,25 @@ from torchvision.transforms import ToTensor
 
 from modeling import DocFormer
 
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        
+    @property
+    def avg(self):
+        return (self.sum / self.count) if self.count>0 else 0
+
 ## Loggers
 class Logger:
     def __init__(self, filename, format='csv'):
