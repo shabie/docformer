@@ -117,7 +117,7 @@ def eval_fn(data_loader, model, criterion, device):
 
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
-            labels = batch["labels"].to(device)
+            labels = batch["mlm_labels"].to(device)
             output = model(batch)
             ce_loss = criterion(output.transpose(1,2), labels)
 
@@ -134,7 +134,7 @@ def eval_fn(data_loader, model, criterion, device):
             loop.set_postfix({k: v.avg for k, v in log.items()})
     return log  # ['total_loss']
 
-date = '16Oct'
+date = '20Oct'
 
 
 def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5e-5):
