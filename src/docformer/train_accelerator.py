@@ -126,9 +126,6 @@ def eval_fn(data_loader, model, criterion, device):
                 log["ce_loss"] = AverageMeter()
                 log['accuracy'] = AverageMeter()
 
-            for k, v in loss_dict.items():
-                log[k].update(v.item(), batch_size)
-
             log['accuracy'].update(val_acc(labels.cpu(),torch.argmax(outputs,-1).cpu()).item(),batch_size)
             log['ce_loss'].update(ce_loss.item())
             loop.set_postfix({k: v.avg for k, v in log.items()})
