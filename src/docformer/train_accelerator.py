@@ -77,6 +77,8 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
     log = None
     train_acc = torchmetrics.Accuracy()
     loop = tqdm(data_loader)
+    
+    print("Training the model.....")
     for batch in loop:
 
         input_ids = batch["input_ids"].to(device)
@@ -110,7 +112,10 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
 def eval_fn(data_loader, model, criterion, device):
     model.eval()
     log = None
-    val_acc = torchmetrics.Accuracy()                     
+    val_acc = torchmetrics.Accuracy()       
+    
+    
+    print("Validating the model.....")
     with torch.no_grad():
         loop = tqdm(data_loader, total=len(data_loader), leave=True)
         for batch in loop:
