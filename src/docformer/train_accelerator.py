@@ -79,7 +79,6 @@ def train_fn(data_loader, model, criterion, optimizer, epoch, device, scheduler=
     train_acc = torchmetrics.Accuracy()
     loop = tqdm(data_loader)
     
-    print("Training the model.....")
     for batch in loop:
 
         input_ids = batch["input_ids"].to(device)
@@ -116,7 +115,6 @@ def eval_fn(data_loader, model, criterion, device):
     val_acc = torchmetrics.Accuracy()       
     
     
-    print("Validating the model.....")
     with torch.no_grad():
         loop = tqdm(data_loader, total=len(data_loader), leave=True)
         for batch in loop:
@@ -150,9 +148,12 @@ def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5
     header_printed = False
     batch_size = config['batch_size']
     for epoch in range(epochs):
+        print("Training the model.....")
         train_log = train_fn(
             train_dataloader, model, criterion, optimizer, epoch, device, scheduler=None
         )
+        
+        print("Validating the model.....")
         valid_log = eval_fn(val_dataloader, model, criterion, device)
         log = {k: v.avg for k, v in train_log.items()}
         log.update({"V/" + k: v.avg for k, v in valid_log.items()})
