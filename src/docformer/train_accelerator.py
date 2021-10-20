@@ -147,7 +147,7 @@ def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5
         train_log = train_fn(
             train_dataloader, model, criterion, optimizer, epoch, device, scheduler=None
         )
-        valid_log = eval_fn(valid_dataloader, model, criterion, device)
+        valid_log = eval_fn(val_dataloader, model, criterion, device)
         log = {k: v.avg for k, v in train_log.items()}
         log.update({"V/" + k: v.avg for k, v in valid_log.items()})
         logger.save(log, epoch)
