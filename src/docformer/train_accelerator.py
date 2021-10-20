@@ -163,7 +163,7 @@ def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5
             print(" ".join(map(lambda k: f"{k[:8]:8}", keys)))
             header_printed = True
         print(" ".join(map(lambda k: f"{log[k]:8.3f}"[:8], keys)))
-        if log["V/ce_loss"] > best_val_loss:
+        if log["V/ce_loss"] < best_val_loss:
             best_val_loss = log["V/ce_loss"]
             print("Best model found at epoch {}".format(epoch + 1))
             torch.save(model.state_dict(), f"{path}/docformer_best_{epoch}_{date}.pth")
