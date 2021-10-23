@@ -516,6 +516,9 @@ class DocFormer(nn.Module):
             features[f] = features[f]
         output = self.encoder(features['t_bar'], features['v_bar'], features['t_bar_s'], features['v_bar_s'])
         output = self.dropout(output)
-        output = self.classifier(output)
+        try:
+            output = self.classifier(output)
+        except:
+            count = 1 ## For the fune tuning task, i had removed the classifier layer
         return output
 
