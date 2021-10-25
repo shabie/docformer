@@ -252,7 +252,8 @@ def create_pickle_file(
     pad_token_box = [0, 0, 0, 0]
     original_image = Image.open(image).convert("RGB")
     entries = apply_ocr(image)
-    resized_image = original_image.resize((target_size, target_size))
+    resized_image = original_image.resize((target_size, target_size))                        # For the purpose of reconstruction of image
+    resized_image_super_resolution = original_image.resize((2*target_size, 2*target_size)) 
     unnormalized_word_boxes = entries["bbox"]
     words = entries["words"]
 
@@ -297,7 +298,8 @@ def create_pickle_file(
     assert len(encoding["token_type_ids"]) == max_seq_length
     assert len(encoding["bbox"]) == max_seq_length
 
-    encoding["resized_image"] = ToTensor()(resized_image)
+    encoding["resized_image"] = ToTensor()(resized_image)/255.0
+    encoding['resized_image_super_resolution'] = ToTensor()(resized_image_super_resolution)/255.0
 
     # Applying mask for the sake of pre-training
     encoding["input_ids"] = apply_mask(encoding["input_ids"])
