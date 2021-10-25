@@ -49,7 +49,6 @@ class RVLCDIPDatset(Dataset):
         encoding['y_features'][:,3:]  = torch.clamp(encoding['y_features'][:,3:],-1024,1024)
         encoding['y_features'][:,3:] +=1024
         ## The image stored in the pickle file is not nromalized, so normalizing it
-        encoding['resized_image']/=255.0
         return encoding
 
 
