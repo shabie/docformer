@@ -179,7 +179,7 @@ def eval_fn(data_loader, model, criterion1,criterion2, device):
 
     return log  # ['total_loss']
 
-date = '20Oct'
+date = '26Oct'
 
 
 def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5e-5):
