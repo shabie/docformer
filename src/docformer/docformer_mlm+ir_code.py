@@ -61,7 +61,7 @@ class ShallowDecoder(nn.Module):
       x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv7(x)))
       x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv8(x)))
       x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv9(x)))
-      return x
+      return torch.sigmoid(x)
 
 class DocFormer_For_IR(nn.Module):
     def __init__(self, config,num_classes= 30522):
