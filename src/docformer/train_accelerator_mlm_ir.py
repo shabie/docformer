@@ -119,7 +119,7 @@ def train_fn(data_loader, model, criterion1,criterion2, optimizer, epoch, device
 
         # process
         outputs = model(batch)
-        ce_loss = criterion1(outputs['mlm_labels'].transpose(1,2), labels)
+        ce_loss = criterion1(outputs['mlm_labels'].transpose(1,2), labels1)
         ir_loss = criterion2(outputs['ir'],labels2)
 
         if log is None:
@@ -164,7 +164,7 @@ def eval_fn(data_loader, model, criterion1,criterion2, device,weights=weights):
 
 
             output = model(batch)
-            ce_loss = criterion1(output['mlm_labels'].transpose(1,2), labels)
+            ce_loss = criterion1(output['mlm_labels'].transpose(1,2), labels1)
             ir_loss = criterion2(output['ir'],labels2)
 
             if log is None:
