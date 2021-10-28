@@ -57,7 +57,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import ToTensor
 
-from modeling import DocFormer
+from docformer_mlm_ir import DocFormer_For_IR
 
 batch_size = 9
 
@@ -187,7 +187,7 @@ date = '26Oct'
 
 def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5e-5,weights=weights):
     logger = Logger(f"{path}/logs")
-    model = DocFormer(config,classes).to(device)
+    model = DocFormer_For_IR(config,classes).to(device)
     criterion1 = nn.CrossEntropyLoss().to(device)
     criterion2 =  torch.nn.L1Loss().to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
