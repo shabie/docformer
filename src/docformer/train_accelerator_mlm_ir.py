@@ -115,7 +115,7 @@ def train_fn(data_loader, model, criterion1,criterion2, optimizer, epoch, device
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
         labels1 = batch["mlm_labels"].to(device)
-        labels2 = batch['resize_image'].to(device)
+        labels2 = batch['resized_image'].to(device)
 
         # process
         outputs = model(batch)
@@ -160,7 +160,7 @@ def eval_fn(data_loader, model, criterion1,criterion2, device,weights=weights):
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
             labels1 = batch["mlm_labels"].to(device)
-            labels2 = batch['resize_image'].to(device)
+            labels2 = batch['resized_image'].to(device)
 
 
             output = model(batch)
