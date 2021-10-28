@@ -137,7 +137,7 @@ def train_fn(data_loader, model, criterion1,criterion2, optimizer, epoch, device
         if scheduler is not None:
             scheduler.step()
 
-        log['accuracy'].update(train_acc(labels1.cpu(),torch.argmax(outputs,-1).cpu()).item(),batch_size)
+        log['accuracy'].update(train_acc(labels1.cpu(),torch.argmax(outputs['mlm_labels'],-1).cpu()).item(),batch_size)
         log['ce_loss'].update(ce_loss.item(),batch_size)
         log['ir_loss'].update(ir_loss.item(),batch_size)
         log['total_loss'].update(total_loss.item(),batch_size)
@@ -166,7 +166,7 @@ def eval_fn(data_loader, model, criterion1,criterion2, device,weights=weights):
             output = model(batch)
             ce_loss = criterion1(output['mlm_labels'].transpose(1,2), labels1)
             ir_loss = criterion2(output['ir'],labels2)
-
+            total_loss = weights['mlm']*ce_loss + weights['ir']*ir_loss
             if log is None:
                 log = {}
                 log["ce_loss"] = AverageMeter()
@@ -174,7 +174,7 @@ def eval_fn(data_loader, model, criterion1,criterion2, device,weights=weights):
                 log['ir_loss'] = AverageMeter()
                 log['total_loss'] = AverageMeter()
 
-            log['accuracy'].update(train_acc(labels1.cpu(),torch.argmax(outputs,-1).cpu()).item(),batch_size)
+            log['accuracy'].update(train_acc(labels1.cpu(),torch.argmax(outputs['mlm_labels'],-1).cpu()).item(),batch_size)
             log['ce_loss'].update(ce_loss.item(),batch_size)
             log['ir_loss'].update(ir_loss.item(),batch_size)
             log['total_loss'].update(total_loss.item(),batch_size)
