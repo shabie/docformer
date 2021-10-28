@@ -61,6 +61,9 @@ from modeling import DocFormer
 
 batch_size = 9
 
+
+weights = {'mlm':5,'ir':1,'tdi':5}
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self):
@@ -98,7 +101,7 @@ class Logger:
 
 
 
-def train_fn(data_loader, model, criterion1,criterion2, optimizer, epoch, device, scheduler=None):
+def train_fn(data_loader, model, criterion1,criterion2, optimizer, epoch, device, scheduler=None,weights=weights):
     model.train()
     accelerator = Accelerator()
     model, optimizer, data_loader = accelerator.prepare(model, optimizer, data_loader)
@@ -126,7 +129,7 @@ def train_fn(data_loader, model, criterion1,criterion2, optimizer, epoch, device
             log['ir_loss'] = AverageMeter()
             log['total_loss'] = AverageMeter()
 
-        total_loss = ce_loss + ir_loss
+        total_loss = weights['mlm']*ce_loss + weights['ir']*ir_loss
         optimizer.zero_grad()
         accelerator.backward(total_loss)
         optimizer.step()
@@ -144,7 +147,7 @@ def train_fn(data_loader, model, criterion1,criterion2, optimizer, epoch, device
 
 
 # Function for the validation data loader
-def eval_fn(data_loader, model, criterion1,criterion2, device):
+def eval_fn(data_loader, model, criterion1,criterion2, device,weights=weights):
     model.eval()
     log = None
     val_acc = torchmetrics.Accuracy()       
@@ -182,7 +185,7 @@ def eval_fn(data_loader, model, criterion1,criterion2, device):
 date = '26Oct'
 
 
-def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5e-5):
+def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5e-5,weights=weights):
     logger = Logger(f"{path}/logs")
     model = DocFormer(config,classes).to(device)
     criterion1 = nn.CrossEntropyLoss().to(device)
