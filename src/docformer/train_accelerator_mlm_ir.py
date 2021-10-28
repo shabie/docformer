@@ -174,7 +174,7 @@ def eval_fn(data_loader, model, criterion1,criterion2, device,weights=weights):
                 log['ir_loss'] = AverageMeter()
                 log['total_loss'] = AverageMeter()
 
-            log['accuracy'].update(val_acc(labels1.cpu(),torch.argmax(outputs['mlm_labels'],-1).cpu()).item(),batch_size)
+            log['accuracy'].update(val_acc(labels1.cpu(),torch.argmax(output['mlm_labels'],-1).cpu()).item(),batch_size)
             log['ce_loss'].update(ce_loss.item(),batch_size)
             log['ir_loss'].update(ir_loss.item(),batch_size)
             log['total_loss'].update(total_loss.item(),batch_size)
