@@ -51,16 +51,16 @@ class ShallowDecoder(nn.Module):
 
     def forward(self, x):
       x = x.unsqueeze(1).cuda()
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=1,device = 'cuda')(self.linear1(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv1(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv2(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv3(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv4(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv5(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv6(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv7(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv8(x)))
-      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3,device = 'cuda')(self.conv9(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=1)(self.linear1(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv1(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv2(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv3(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv4(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv5(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv6(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv7(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv8(x)))
+      x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3)(self.conv9(x)))
       return torch.sigmoid(x)
 
 class DocFormer_For_IR(nn.Module):
