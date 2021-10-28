@@ -26,7 +26,7 @@ from transformers import AutoModel, AutoTokenizer
 
 """## Base Dataset"""
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cuda" 
 
 """## Base Model"""
 
