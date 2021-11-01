@@ -163,19 +163,14 @@ def read_image_and_extract_text(image):
     return apply_ocr(image)
 
 
-def create_pickle_file(
+def create_features(
         image,
         path_to_save,
-        tokenizer=None,
+        tokenizer,
         target_size=224,
         max_seq_length=512,
+        save_to_disk=False,
 ):
-    if not os.path.exists(path_to_save):
-        os.mkdir(path_to_save)
-
-    if tokenizer is None:
-        from transformers import BertTokenizer
-        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
     pad_token_box = [0, 0, 0, 0]
     original_image = Image.open(image).convert("RGB")
@@ -262,7 +257,9 @@ def create_pickle_file(
         })
     assert torch.lt(encoding["x_features"], 0).sum().item() == 0
     assert torch.lt(encoding["y_features"], 0).sum().item() == 0
-    image_name = os.path.basename(image)
-    with open(f"{path_to_save}{image_name}.pickle", "wb") as f:
-        pickle.dump(encoding, f)
+    if save_to_disk:
+        os.makedirs(path_to_save, exist_ok=True)
+        image_name = os.path.basename(image)
+        with open(f"{path_to_save}{image_name}.pickle", "wb") as f:
+            pickle.dump(encoding, f)
     return encoding
