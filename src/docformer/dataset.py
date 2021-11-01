@@ -240,10 +240,9 @@ def create_features(
     encoding["resized_and_aligned_bounding_boxes"] = resized_and_aligned_bboxes
     index = -1
     
-    # get the index of the last word (using the input id)
-    for i in range(len(encoding["input_ids"]) - 1):
-        if encoding["input_ids"][i + 1] == 0:
-            index = i
+    # get index of the last word (using the input id). input ids cant be less than number of words
+    for index in range(len(words), len(encoding["input_ids"]) - 1):
+        if encoding["input_ids"][index + 1] == 0:
             break
 
     # step 10: add the relative distances in the normalized grid
