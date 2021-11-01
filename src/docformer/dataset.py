@@ -10,16 +10,16 @@ import torch
 from torchvision.transforms import ToTensor
 
 
-def normalize_box(box, width, height):
+def normalize_box(box, width, height, size=1000):
     """
     Takes a bounding box and normalizes it to a thousand pixels. If you notice it is
     just like calculating percentage except takes 1000 instead of 100.
     """
     return [
-        int(1000 * (box[0] / width)),
-        int(1000 * (box[1] / height)),
-        int(1000 * (box[2] / width)),
-        int(1000 * (box[3] / height)),
+        int(size * (box[0] / width)),
+        int(size * (box[1] / height)),
+        int(size * (box[2] / width)),
+        int(size * (box[3] / height)),
     ]
 
 
@@ -173,30 +173,35 @@ def create_features(
 ):
 
     pad_token_box = [0, 0, 0, 0]
+
+    # step 1: read original image and extract OCR entries
     original_image = Image.open(image).convert("RGB")
     entries = apply_ocr(image)
+
+    # step 2: resize image
     resized_image = original_image.resize((target_size, target_size))
     unnormalized_word_boxes = entries["bbox"]
     words = entries["words"]
 
+    # step 3: normalize image to a grid of 1000 x 1000 (to avoid the problem of differently sized images)
     width, height = original_image.size
     normalized_word_boxes = [
-        normalize_box(bbox, width, height) for bbox in unnormalized_word_boxes
+        normalize_box(bbox, width, height, 1000) for bbox in unnormalized_word_boxes
     ]
     assert len(words) == len(normalized_word_boxes)
 
+    # step 4: tokenize words and get their bounding boxes (one word may split into multiple tokens)
     token_boxes, unnormalized_token_boxes, final_word_tokens = get_tokens_with_bboxes(
         tokenizer, words, unnormalized_word_boxes, normalized_word_boxes
     )
 
-    # Truncation of token_boxes + token_labels
+    # step 5: add special tokens and truncate seq. to maximum length
     special_tokens_count = 1
     remaining_length = max_seq_length - special_tokens_count
     if len(token_boxes) > remaining_length:
         token_boxes = token_boxes[: remaining_length]
         unnormalized_token_boxes = unnormalized_token_boxes[: remaining_length]
 
-    # add bounding boxes and labels of cls + sep tokens
     token_boxes = [[0, 0, 0, 0]] + token_boxes
     unnormalized_token_boxes = ([[0, 0, 0, 0]] + unnormalized_token_boxes)
     encoding = tokenizer(" ".join(words),
@@ -204,16 +209,16 @@ def create_features(
                          max_length=max_seq_length,
                          truncation=True,
                          add_special_tokens=False)
-    # add CLS token manually to avoid autom. addition of SEP
+    # add CLS token manually to avoid autom. addition of SEP as in the paper
     encoding["input_ids"] = [101] + encoding["input_ids"][:-1]
 
-    # Padding of token_boxes up the bounding boxes to the sequence length.
-    input_ids = tokenizer(" ".join(words), truncation=True)["input_ids"]
-    assert len(input_ids) == len(token_boxes)  # check if number of tokens match
-    padding_length = max_seq_length - len(input_ids)
+    # step 6: pad token_boxes up to the sequence length
+    assert len(encoding["input_ids"]) == len(token_boxes)  # check if number of tokens match
+    padding_length = max_seq_length - len(encoding["input_ids"])
     token_boxes += [pad_token_box] * padding_length
     unnormalized_token_boxes += [pad_token_box] * padding_length
     encoding["bbox"] = token_boxes
+    encoding["unnormalized_token_boxes"] = unnormalized_token_boxes
     encoding["mlm_labels"] = encoding["input_ids"]
 
     assert len(encoding["mlm_labels"]) == max_seq_length
@@ -222,32 +227,30 @@ def create_features(
     assert len(encoding["token_type_ids"]) == max_seq_length
     assert len(encoding["bbox"]) == max_seq_length
 
-    encoding["resized_image"] = ToTensor()(resized_image)/255.0  # Normalizing the image
+    # step 7: normalize the image
+    encoding["resized_image"] = ToTensor()(resized_image) / 255.0
 
-    # Applying mask for the sake of pre-training
+    # step 8: apply mask for the sake of pre-training
     encoding["input_ids"] = apply_mask(encoding["input_ids"])
 
-    # rescale and align the bounding boxes to match the resized image size (typically 224x224)
-    new_bboxes = []
+    # step 9: rescale and align the bounding boxes to match the resized image size (typically 224x224)
+    resized_and_aligned_bboxes = []
     for bbox in unnormalized_token_boxes:
-        new_bboxes.append(resize_align_bbox(bbox, original_image, target_size))
-    
-    encoding["resized_and_aligned_bounding_boxes"] = new_bboxes
+        resized_and_aligned_bboxes.append(resize_align_bbox(bbox, original_image, target_size))
+    encoding["resized_and_aligned_bounding_boxes"] = resized_and_aligned_bboxes
     index = -1
     
-    # getting the index of the last word (using the input id)
+    # get the index of the last word (using the input id)
     for i in range(len(encoding["input_ids"]) - 1):
         if encoding["input_ids"][i + 1] == 0:
             index = i
             break
 
-    # adding the relative position as well
-    actual_bbox = encoding["resized_and_aligned_bounding_boxes"]
-    centroid = get_centroid(actual_bbox)
+    # step 10: add the relative distances in the normalized grid
+    centroid = get_centroid(resized_and_aligned_bboxes)
+    a_rel_x, a_rel_y = get_relative_distance(resized_and_aligned_bboxes, centroid, index)
 
-    a_rel_x, a_rel_y = get_relative_distance(actual_bbox, centroid, index)
-    encoding["unnormalized_token_boxes"] = unnormalized_token_boxes
-
+    # step 11: convert all to tensors
     for k, v in encoding.items():
         encoding[k] = torch.as_tensor(encoding[k])
 
@@ -257,9 +260,12 @@ def create_features(
         })
     assert torch.lt(encoding["x_features"], 0).sum().item() == 0
     assert torch.lt(encoding["y_features"], 0).sum().item() == 0
+
+    # step 12: save to disk
     if save_to_disk:
         os.makedirs(path_to_save, exist_ok=True)
         image_name = os.path.basename(image)
         with open(f"{path_to_save}{image_name}.pickle", "wb") as f:
             pickle.dump(encoding, f)
+
     return encoding
