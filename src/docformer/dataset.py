@@ -222,7 +222,7 @@ def create_features(
     assert len(encoding["token_type_ids"]) == max_seq_length
     assert len(encoding["bbox"]) == max_seq_length
 
-    encoding["resized_image"] = ToTensor()(resized_image)
+    encoding["resized_image"] = ToTensor()(resized_image)/255.0  # Normalizing the image
 
     # Applying mask for the sake of pre-training
     encoding["input_ids"] = apply_mask(encoding["input_ids"])
