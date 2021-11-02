@@ -52,7 +52,7 @@ class Model(pl.LightningModule):
     
     super().__init__()
     self.save_hyperparameters()
-    self.docformer = DocFormer(config,num_classes)
+    self.docformer = DocFormerForClassification(config,num_classes)
 
   def forward(self,x):
     return self.docformer(x)
