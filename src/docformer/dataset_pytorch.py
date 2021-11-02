@@ -13,15 +13,11 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import ToTensor
 from transformers import AutoModel, AutoTokenizer
 
-# pathToPickleFile = 'RVL-CDIP-PickleFiles/'
-# entries = os.listdir(pathToPickleFile)
-
 """## Base Dataset"""
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-class RVLCDIPDatset(Dataset):
+class DocumentDatset(Dataset):
     def __init__(self, entries, pathToPickleFile,pretrain= True):
         self.pathToPickleFile = pathToPickleFile
         self.entries = entries
@@ -40,7 +36,7 @@ class RVLCDIPDatset(Dataset):
             
         if self.pretrain:  
             
-            # If the model is used for the purpose of pretraining, then no need for the other entries, since there would be some errors, while training
+            # If the model is used for the purpose of pretraining, then there is no need for the other entries, since there would be some errors, while training
             
             del encoding['category_labels']                   # Error would be created, because category label cannot be stored in the pytorch tensor
             del encoding['numeric_labels']                    # Removed it, but this can be used for the purpose of the segmenting (as for an example, in the FUNSD Dataset)
@@ -54,6 +50,8 @@ class RVLCDIPDatset(Dataset):
         return encoding
 
 
+# pathToPickleFile = 'RVL-CDIP-PickleFiles/'
+# entries = os.listdir(pathToPickleFile)
 # train_entries,val_entries = tts(entries,test_size = 0.2)
-# train_dataset = RVLCDIPDatset(train_entries,pathToPickleFile)
-# val_dataset = RVLCDIPDatset(val_entries,pathToPickleFile)
+# train_dataset = DocumentDatset(train_entries,pathToPickleFile)
+# val_dataset = DocumentDatset(val_entries,pathToPickleFile)
