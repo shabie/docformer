@@ -37,10 +37,14 @@ class RVLCDIPDatset(Dataset):
         with open(encoding, "rb") as sample:
             encoding = pickle.load(sample)
         if self.colab:  # Using for the pretraining task
-            del encoding['category_labels']
-            del encoding['numeric_labels']
-            del encoding['target_bbox']
-            del encoding['resized_and_aligned_target_bbox']
+            if 'category_labels' in encoding.keys():
+                del encoding['category_labels']
+            if 'numeric_labels' in encoding.keys():
+                del encoding['numeric_labels']
+            if 'target_bbox' in encoding.keys():
+                del encoding['target_bbox']
+            if 'resized_and_aligned_target_bbox' in encoding.keys():
+                del encoding['resized_and_aligned_target_bbox']
         for i in list(encoding.keys()):
             encoding[i] = encoding[i].to(device)
             
