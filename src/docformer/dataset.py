@@ -228,7 +228,7 @@ def create_features(
     assert len(encoding["bbox"]) == max_seq_length
 
     # step 7: normalize the image
-    encoding["resized_image"] = ToTensor()(resized_image) / 255.0
+    encoding["resized_scaled_img"] = ToTensor()(resized_image) / 255.0
 
     # step 8: apply mask for the sake of pre-training
     encoding["input_ids"] = apply_mask(encoding["input_ids"])
@@ -254,8 +254,8 @@ def create_features(
         encoding[k] = torch.as_tensor(encoding[k])
 
     encoding.update({
-        "x_features": torch.as_tensor(a_rel_x),
-        "y_features": torch.as_tensor(a_rel_y),
+        "x_features": torch.as_tensor(a_rel_x, dtype=torch.int32),
+        "y_features": torch.as_tensor(a_rel_y, dtype=torch.int32),
         })
     assert torch.lt(encoding["x_features"], 0).sum().item() == 0
     assert torch.lt(encoding["y_features"], 0).sum().item() == 0
