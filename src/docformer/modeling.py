@@ -500,7 +500,7 @@ class ExtractFeatures(nn.Module):
     return v_bar, t_bar, v_bar_s, t_bar_s
 
 
-class DocFormer(nn.Module):
+class DocFormerForClassification(nn.Module):
     def __init__(self, config, num_classes):
         super().__init__()
         self.config = config
