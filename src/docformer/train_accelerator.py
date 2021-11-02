@@ -140,7 +140,7 @@ date = '20Oct'
 
 def run(config,train_dataloader,val_dataloader,device,epochs,path,classes,lr = 5e-5):
     logger = Logger(f"{path}/logs")
-    model = DocFormer(config,classes).to(device)
+    model = DocFormerForClassification(config,classes).to(device)
     criterion = nn.CrossEntropyLoss()
     criterion = criterion.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
