@@ -525,6 +525,10 @@ class DocFormerForClassification(nn.Module):
 ## Adding the code for the MLM + Image Reconstruction
 # The Shallow decoder can be modified as per the requirement
 
+# This is the code, which was basically used for the pretraining task of MLM + Image Reconstruction, the steps are as follows:
+# 1. Add the DocFormer Encoder
+# 2. Add a simple shallow decoder (and for that, I have used a vanilla convolution type network)
+
 class ShallowDecoder(nn.Module):
     def __init__(self):
         super().__init__()
