@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import pickle
-
 import pytesseract
-
 import numpy as np
 from PIL import Image
 import torch
