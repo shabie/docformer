@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import pickle
-
 import pytesseract
-
 import numpy as np
 from PIL import Image
 import torch
@@ -35,11 +33,11 @@ def resize_align_bbox(bbox, original_image, target_size):
     return [x, y, xmax, ymax]
 
 
-def apply_ocr(example):
+def apply_ocr(image_fp):
     """
     Returns words and its bounding boxes from an image
     """
-    image = Image.open(example)
+    image = Image.open(image_fp)
     width, height = image.size
 
     ocr_df = pytesseract.image_to_data(image, output_type="data.frame")
@@ -99,7 +97,15 @@ def get_centroid(actual_bbox):
     return centroid
 
 
-def get_relative_distance(actual_bbox, centroid, index):
+def get_pad_token_id_start_index(words, encoding, tokenizer):
+    assert len(words) < len(encoding["input_ids"])
+    for idx in range(len(words), len(encoding["input_ids"])):
+        if encoding["input_ids"][idx] == tokenizer.pad_token_id:
+            break
+    return idx
+
+
+def get_relative_distance(bboxes, centroids, pad_tokens_start_idx):
     """
     Note: We take absolute distances to avoid embedding problems.
     Reason is that all we want to know is how FAR one word is
@@ -108,41 +114,42 @@ def get_relative_distance(actual_bbox, centroid, index):
     """
     a_rel_x = []
     a_rel_y = []
+    a_rel_x.append([0] * 8)  # For the "first" CLS token
+    a_rel_y.append([0] * 8)  # For the "first" CLS token
 
-    for i in range(0, len(actual_bbox) - 1):
-        if i != index:
-            prev = actual_bbox[i]
-            curr = actual_bbox[i + 1]
-            a_rel_x.append(
-                [
-                    prev[0],  # top left x
-                    prev[2],  # bottom right x
-                    abs(prev[2] - prev[0]),  # width
-                    abs(curr[0] - prev[0]),  # diff top left x
-                    abs(curr[0] - prev[0]),  # diff bottom left x
-                    abs(curr[2] - prev[2]),  # diff top right x
-                    abs(curr[2] - prev[2]),  # diff bottom right x
-                    abs(centroid[i + 1][0] - centroid[i][0]),
-                ]
-            )
-            a_rel_y.append(
-                [
-                    prev[1],  # top left y
-                    prev[3],  # bottom right y
-                    abs(prev[3] - prev[1]),  # height
-                    abs(curr[1] - prev[1]),  # diff top left y
-                    abs(curr[3] - prev[3]),  # diff bottom left y
-                    abs(curr[1] - prev[1]),  # diff top right y
-                    abs(curr[3] - prev[3]),  # diff bottom right y
-                    abs(centroid[i + 1][1] - centroid[i][1]),
-                ]
-            )
-        else:
-            a_rel_x.append([0] * 8)  # For the actual last word
-            a_rel_y.append([0] * 8)  # For the actual last word
+    for i in range(1, len(bboxes)):
+        if i > pad_tokens_start_idx:
+            a_rel_x.append([0] * 8)
+            a_rel_y.append([0] * 8)
+            continue
 
-    a_rel_x.append([0] * 8)  # For the last word
-    a_rel_y.append([0] * 8)  # For the last word
+        curr = bboxes[i]
+        prev = bboxes[i - 1]
+        a_rel_x.append(
+            [
+                curr[0],  # top left x
+                curr[2],  # bottom right x
+                abs(curr[2] - curr[0]),  # width
+                abs(curr[0] - prev[0]),  # diff top left x
+                abs(curr[0] - prev[0]),  # diff bottom left x
+                abs(curr[2] - prev[2]),  # diff top right x
+                abs(curr[2] - prev[2]),  # diff bottom right x
+                abs(centroids[i][0] - centroids[i - 1][0]),
+            ]
+        )
+        a_rel_y.append(
+            [
+                curr[1],  # top left y
+                curr[3],  # bottom right y
+                abs(curr[3] - curr[1]),  # height
+                abs(curr[1] - prev[1]),  # diff top left y
+                abs(curr[3] - prev[3]),  # diff bottom left y
+                abs(curr[1] - prev[1]),  # diff top right y
+                abs(curr[3] - prev[3]),  # diff bottom right y
+                abs(centroids[i][1] - centroids[i - 1][1]),
+            ]
+        )
+
     return a_rel_x, a_rel_y
 
 
@@ -153,7 +160,7 @@ def apply_mask(inputs):
     mask_arr = (rand < 0.15) * (inputs != 101) * (inputs != 102) * (inputs != 0)
     # create selection from mask_arr
     selection = torch.flatten(mask_arr.nonzero()).tolist()
-    # apply selection index to inputs.input_ids, adding MASK tokens
+    # apply selection pad_tokens_start_idx to inputs.input_ids, adding MASK tokens
     inputs[selection] = 103
     return inputs
 
@@ -170,6 +177,7 @@ def create_features(
         target_size=224,
         max_seq_length=512,
         save_to_disk=False,
+        extras_for_debugging=False,
 ):
 
     pad_token_box = [0, 0, 0, 0]
@@ -204,12 +212,13 @@ def create_features(
 
     token_boxes = [[0, 0, 0, 0]] + token_boxes
     unnormalized_token_boxes = ([[0, 0, 0, 0]] + unnormalized_token_boxes)
-    encoding = tokenizer(" ".join(words),
+    encoding = tokenizer(words,
                          padding="max_length",
                          max_length=max_seq_length,
+                         is_split_into_words=True,
                          truncation=True,
                          add_special_tokens=False)
-    # add CLS token manually to avoid autom. addition of SEP as in the paper
+    # add CLS token manually to avoid autom. addition of SEP too (as in the paper)
     encoding["input_ids"] = [101] + encoding["input_ids"][:-1]
 
     # step 6: pad token_boxes up to the sequence length
@@ -228,7 +237,7 @@ def create_features(
     assert len(encoding["bbox"]) == max_seq_length
 
     # step 7: normalize the image
-    encoding["resized_image"] = ToTensor()(resized_image) / 255.0
+    encoding["resized_scaled_img"] = ToTensor()(resized_image) / 255.0
 
     # step 8: apply mask for the sake of pre-training
     encoding["input_ids"] = apply_mask(encoding["input_ids"])
@@ -238,29 +247,29 @@ def create_features(
     for bbox in unnormalized_token_boxes:
         resized_and_aligned_bboxes.append(resize_align_bbox(bbox, original_image, target_size))
     encoding["resized_and_aligned_bounding_boxes"] = resized_and_aligned_bboxes
-    index = -1
     
-    # get index of the last word (using the input id). input ids cant be less than number of words
-    for index in range(len(words), len(encoding["input_ids"]) - 1):
-        if encoding["input_ids"][index + 1] == 0:
-            break
-
     # step 10: add the relative distances in the normalized grid
-    centroid = get_centroid(resized_and_aligned_bboxes)
-    a_rel_x, a_rel_y = get_relative_distance(resized_and_aligned_bboxes, centroid, index)
+    bboxes_centroids = get_centroid(resized_and_aligned_bboxes)
+    pad_token_start_index = get_pad_token_id_start_index(words, encoding, tokenizer)
+    a_rel_x, a_rel_y = get_relative_distance(resized_and_aligned_bboxes, bboxes_centroids, pad_token_start_index)
 
     # step 11: convert all to tensors
     for k, v in encoding.items():
         encoding[k] = torch.as_tensor(encoding[k])
 
     encoding.update({
-        "x_features": torch.as_tensor(a_rel_x),
-        "y_features": torch.as_tensor(a_rel_y),
+        "x_features": torch.as_tensor(a_rel_x, dtype=torch.int32),
+        "y_features": torch.as_tensor(a_rel_y, dtype=torch.int32),
         })
     assert torch.lt(encoding["x_features"], 0).sum().item() == 0
     assert torch.lt(encoding["y_features"], 0).sum().item() == 0
 
-    # step 12: save to disk
+    # step 12: add tokens for debugging
+    if extras_for_debugging:
+        encoding["tokens_without_padding"] = ["[CLS]"] + tokenizer.convert_ids_to_tokens(encoding["mlm_labels"])
+        encoding["words"] = words
+
+    # step 13: save to disk
     if save_to_disk:
         os.makedirs(path_to_save, exist_ok=True)
         image_name = os.path.basename(image)
