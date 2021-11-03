@@ -178,7 +178,7 @@ class DocFormerEmbeddings(nn.Module):
         y_calculated_embedding_v = torch.cat(y_calculated_embedding_v, dim=-1)
 
         v_bar_s = x_calculated_embedding_v + y_calculated_embedding_v + self.position_embeddings_v()
-        
+
         x_embedding_t = [
             self.x_topleft_position_embeddings_t,
             self.x_bottomright_position_embeddings_t,
