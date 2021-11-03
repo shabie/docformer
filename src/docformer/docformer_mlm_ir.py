@@ -1,4 +1,12 @@
+# This is the code, which was basically used for the pretraining task of MLM + Image Reconstruction, the steps are as follows:
+# 1. Add the DocFormer Encoder
+# 2. Add a simple shallow decoder (and for that, I have used a vanilla convolution type network)
 
+
+
+from modeling import *
+import torch
+import torch.nn as nn
 
 config = {
   "coordinate_size": 96,
@@ -22,13 +30,8 @@ config = {
   "batch_size":1
 }
 
-from modeling import *
-import torch
-import torch.nn as nn
 
-
-import torch.nn as nn
-import torch
+# The Shallow decoder can be modified as per the requirement
 class ShallowDecoder(nn.Module):
     def __init__(self):
         super().__init__()
@@ -83,6 +86,8 @@ class DocFormer_For_IR(nn.Module):
         output_mlm = self.classifier(output)
         output_ir = self.decoder(output) 
         return {'mlm_labels':output_mlm,'ir':output_ir}
+      
+      
 # model = DocFormer_For_IR(config).cuda()
 
 # import pickle
