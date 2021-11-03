@@ -13,11 +13,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import ToTensor
 from transformers import AutoModel, AutoTokenizer
-import torchvision.models as models
-from einops import rearrange
-from torch import Tensor
 from modelling import *
-from sklearn.metrics import accuracy_score
 
 """## Base Dataset"""
 
@@ -44,8 +40,6 @@ config = {
 }
 
 
-
-
 class Model(pl.LightningModule):
     
   def __init__(self,config,num_classes,lr = 5e-5):
@@ -59,7 +53,7 @@ class Model(pl.LightningModule):
 
   def training_step(self,batch,batch_idx):
         
-    # For the purpose of pretraining, there could be multiple target outputs, so therefore we need to add additional loss function, as for an example, if the MLM + IR is to be done
+    # For the purpose of pretraining, there could be multiple target outputs, so therefore we need to add additional loss function, as for an image_fp, if the MLM + IR is to be done
     # then, there could be a dictionary as an output, and then we need to define two criterion as CrossEntropy and L1 loss, and add the weighted sum of them as the total loss
     # and proceed forward, and for the whole process, only the final head of the DocFormer encoder needs to be changed, and thats it
     

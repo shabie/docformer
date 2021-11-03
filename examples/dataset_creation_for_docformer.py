@@ -181,7 +181,7 @@ def createPickelFile(image,pathToSave,tokenizer=None,target_size = 224,max_seq_l
                                                           for bbox in image['boxes']]
 
         index = -1
-        # getting the index of the last word (using the input id)
+        # getting the pad_tokens_start_idx of the last word (using the input id)
         for i in range(len(encoding['input_ids']) - 1):
           if encoding['input_ids'][i + 1] == 0:
             index = i
@@ -190,7 +190,7 @@ def createPickelFile(image,pathToSave,tokenizer=None,target_size = 224,max_seq_l
         # adding the relative position as well
         actual_bbox = encoding['resized_and_aligned_bounding_boxes_for_words']
 
-        # Calculating the centroid
+        # Calculating the centroids
         centroid = get_centroid(actual_bbox)
 
         a_rel_x, a_rel_y = get_relative_distance(actual_bbox, centroid, index)

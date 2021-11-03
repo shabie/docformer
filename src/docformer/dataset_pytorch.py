@@ -39,7 +39,7 @@ class DocumentDatset(Dataset):
             # If the model is used for the purpose of pretraining, then there is no need for the other entries, since there would be some errors, while training
             
             del encoding['category_labels']                   # Error would be created, because category label cannot be stored in the pytorch tensor
-            del encoding['numeric_labels']                    # Removed it, but this can be used for the purpose of the segmenting (as for an example, in the FUNSD Dataset)
+            del encoding['numeric_labels']                    # Removed it, but this can be used for the purpose of the segmenting (as for an image_fp, in the FUNSD Dataset)
             del encoding['target_bbox']                       # For the purpose of segmenting the different text in the image
             del encoding['resized_and_aligned_target_bbox']   # Resized version of the above bounding box, for 224x224 image
             
