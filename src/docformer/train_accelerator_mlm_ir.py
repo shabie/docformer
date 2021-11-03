@@ -1,33 +1,11 @@
 # -*- coding: utf-8 -*-
-# Commented out IPython magic to ensure Python compatibility.
-# %%capture
-# !pip install -q transformers
-# !pip install -q pytorch-lightning
-# !sudo apt install tesseract-ocr
-# !pip install -q pytesseract
-# !pip install -q transformers
-# !pip install -q einops
-# !pip install -q accelerate
-# !pip install -q tqdm
-# !pip install -q torchmetrics
-# 
-# 
-# import shutil
-# try:
-#   shutil.rmtree('docformer')
-# except:
-#   pass
-# 
-# !git clone https://github.com/uakarsh/docformer.git
-# import sys
-# sys.path.extend(['docformer/'])
-# sys.path.extend(['docformer/src/docformer/'])
 
-import pickle
-import os
+
 
 ## Dependencies
 
+import pickle
+import os
 from accelerate import Accelerator
 import accelerate
 import pytesseract
@@ -43,12 +21,8 @@ import numpy as np
 from tqdm.auto import tqdm
 from torchvision.transforms import ToTensor
 import torch.nn.functional as F
-
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.models as models
-from accelerate import Accelerator
 from einops import rearrange
 from einops import rearrange as rearr
 from PIL import Image
@@ -56,8 +30,7 @@ from sklearn.model_selection import train_test_split as tts
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import ToTensor
-
-from docformer_mlm_ir import DocFormer_For_IR
+from modeling import *
 
 batch_size = 9
 
