@@ -153,11 +153,11 @@ def get_relative_distance(bboxes, centroids, pad_tokens_start_idx):
     return a_rel_x, a_rel_y
 
 
-def apply_mask(inputs):
+def apply_mask(inputs, tokenizer):
     inputs = torch.as_tensor(inputs)
     rand = torch.rand(inputs.shape)
     # where the random array is less than 0.15, we set true
-    mask_arr = (rand < 0.15) * (inputs != 101) * (inputs != 102) * (inputs != 0)
+    mask_arr = (rand < 0.15) * (inputs != tokenizer.cls_token_id) * (inputs != tokenizer.pad_token_id)
     # create selection from mask_arr
     selection = torch.flatten(mask_arr.nonzero()).tolist()
     # apply selection pad_tokens_start_idx to inputs.input_ids, adding MASK tokens
@@ -178,6 +178,7 @@ def create_features(
         max_seq_length=512,
         path_to_save=None,
         save_to_disk=False,
+        apply_mask_for_mlm=False,
         extras_for_debugging=False,
 ):
 
@@ -220,7 +221,7 @@ def create_features(
                          truncation=True,
                          add_special_tokens=False)
     # add CLS token manually to avoid autom. addition of SEP too (as in the paper)
-    encoding["input_ids"] = [101] + encoding["input_ids"][:-1]
+    encoding["input_ids"] = [tokenizer.cls_token_id] + encoding["input_ids"][:-1]
 
     # step 6: pad token_boxes up to the sequence length
     assert len(encoding["input_ids"]) == len(token_boxes)  # check if number of tokens match
@@ -229,7 +230,6 @@ def create_features(
     unnormalized_token_boxes += [pad_token_box] * padding_length
     encoding["bbox"] = token_boxes
     encoding["unnormalized_token_boxes"] = unnormalized_token_boxes
-    encoding["mlm_labels"] = encoding["input_ids"]
 
     assert len(encoding["mlm_labels"]) == max_seq_length
     assert len(encoding["input_ids"]) == max_seq_length
@@ -241,7 +241,9 @@ def create_features(
     encoding["resized_scaled_img"] = ToTensor()(resized_image) / 255.0
 
     # step 8: apply mask for the sake of pre-training
-    encoding["input_ids"] = apply_mask(encoding["input_ids"])
+    if apply_mask_for_mlm:
+        encoding["mlm_labels"] = encoding["input_ids"]
+        encoding["input_ids"] = apply_mask(encoding["input_ids"], tokenizer)
 
     # step 9: rescale and align the bounding boxes to match the resized image size (typically 224x224)
     resized_and_aligned_bboxes = []
@@ -267,7 +269,8 @@ def create_features(
 
     # step 12: add tokens for debugging
     if extras_for_debugging:
-        encoding["tokens_without_padding"] = ["[CLS]"] + tokenizer.convert_ids_to_tokens(encoding["mlm_labels"])
+        input_ids = encoding["mlm_labels"] if apply_mask_for_mlm else encoding["input_ids"]
+        encoding["tokens_without_padding"] = ["[CLS]"] + tokenizer.convert_ids_to_tokens(input_ids)
         encoding["words"] = words
 
     # step 13: add extra dim for batch
