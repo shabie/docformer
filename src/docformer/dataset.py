@@ -172,10 +172,11 @@ def read_image_and_extract_text(image):
 
 def create_features(
         image,
-        path_to_save,
         tokenizer,
+        add_batch_dim=True,
         target_size=224,
         max_seq_length=512,
+        path_to_save=None,
         save_to_disk=False,
         extras_for_debugging=False,
 ):
@@ -269,7 +270,14 @@ def create_features(
         encoding["tokens_without_padding"] = ["[CLS]"] + tokenizer.convert_ids_to_tokens(encoding["mlm_labels"])
         encoding["words"] = words
 
-    # step 13: save to disk
+    # step 13: add extra dim for batch
+    if add_batch_dim:
+        encoding["x_features"].unsqueeze_(0)
+        encoding["y_features"].unsqueeze_(0)
+        encoding["input_ids"].unsqueeze_(0)
+        encoding["resized_scaled_img"].unsqueeze_(0)
+
+    # step 14: save to disk
     if save_to_disk:
         os.makedirs(path_to_save, exist_ok=True)
         image_name = os.path.basename(image)
@@ -283,4 +291,4 @@ if __name__ == '__main__':
     from transformers import BertTokenizer
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
     fp = '/media/shabie/S&G/docformer/data/rvl-cdip/images/imagesa/a/a/a/aaa06d00/50486482-6482.tif'
-    encoding = create_features(fp, "../exports", tokenizer)
+    encoding = create_features(fp, tokenizer)
