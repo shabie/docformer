@@ -17,6 +17,8 @@ pip install pytesseract
 sudo apt install tesseract-ocr
 ```
 
+And then,
+
 ```python
 pip install git+https://github.com/shabie/docformer
 ```
