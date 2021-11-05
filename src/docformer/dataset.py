@@ -198,7 +198,7 @@ def create_features(
     normalized_word_boxes = [
         normalize_box(bbox, width, height, 1000) for bbox in unnormalized_word_boxes
     ]
-    assert len(words) == len(normalized_word_boxes)
+    assert len(words) == len(normalized_word_boxes), "Length of words != Length of normalized words"
 
     # step 4: tokenize words and get their bounding boxes (one word may split into multiple tokens)
     token_boxes, unnormalized_token_boxes, final_word_tokens = get_tokens_with_bboxes(
@@ -224,18 +224,18 @@ def create_features(
     encoding["input_ids"] = [tokenizer.cls_token_id] + encoding["input_ids"][:-1]
 
     # step 6: pad token_boxes up to the sequence length
-    assert len(encoding["input_ids"]) == len(token_boxes)  # check if number of tokens match
+    assert len(encoding["input_ids"]) == len(token_boxes), "Length of input ids != Length of token boxes"  # check if number of tokens match
     padding_length = max_seq_length - len(encoding["input_ids"])
     token_boxes += [pad_token_box] * padding_length
     unnormalized_token_boxes += [pad_token_box] * padding_length
     encoding["bbox"] = token_boxes
     encoding["unnormalized_token_boxes"] = unnormalized_token_boxes
 
-    assert len(encoding["mlm_labels"]) == max_seq_length
-    assert len(encoding["input_ids"]) == max_seq_length
-    assert len(encoding["attention_mask"]) == max_seq_length
-    assert len(encoding["token_type_ids"]) == max_seq_length
-    assert len(encoding["bbox"]) == max_seq_length
+    assert len(encoding["mlm_labels"]) == max_seq_length , "Length of mlm_labels != Length of max_seq_length"
+    assert len(encoding["input_ids"]) == max_seq_length,"Length of input_ids != Length of max_seq_length"
+    assert len(encoding["attention_mask"]) == max_seq_length,"Length of attention mask != Length of max_seq_length"
+    assert len(encoding["token_type_ids"]) == max_seq_length, "Length of token type ids != Length of max_seq_length"
+    assert len(encoding["bbox"]) == max_seq_length, "Length of bbox != Length of max_seq_length"
 
     # step 7: normalize the image
     encoding["resized_scaled_img"] = ToTensor()(resized_image) / 255.0

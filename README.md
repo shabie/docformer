@@ -10,6 +10,15 @@ The official implementation was not released by the authors.
 
 ## Install
 
+There might be some issues with the import of pytessaract, so in order to debug that, we need to write
+
+```python
+pip install pytesseract
+sudo apt install tesseract-ocr
+```
+
+And then,
+
 ```python
 pip install git+https://github.com/shabie/docformer
 ```

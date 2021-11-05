@@ -21,6 +21,7 @@ setup(
     'torchvision',
     'pytesseract',
     'transformers',
+    'pytesseract>=0.3.8',
   ],
   classifiers=[
     'Development Status :: 4 - Beta',
