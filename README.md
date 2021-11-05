@@ -17,7 +17,7 @@ pip install git+https://github.com/shabie/docformer
 ## Usage
 
 ```python
-from docformer import modeling, dataset
+from docformer.src.docformer import modeling, dataset
 from transformers import BertTokenizer
 
 
