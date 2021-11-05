@@ -2,8 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
   name = 'docformer',
-  packages = find_packages(exclude=['examples']),
-  version = '0.0.1',
+  packages = find_packages(where="src"),
+  package_dir = {"": "src", "docformer": "src/docformer"},
+  version = '0.1.0',
   license='MIT',
   description = 'DocFormer: End-to-End Transformer for Document Understanding',
   author = 'Akarsh Upadhay, Shabie Iqbal',
@@ -18,6 +19,7 @@ setup(
     'einops>=0.3',
     'torch>=1.6',
     'torchvision',
+    'pytesseract',
     'transformers',
   ],
   classifiers=[
