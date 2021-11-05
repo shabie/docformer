@@ -49,8 +49,6 @@ v_bar, t_bar, v_bar_s, t_bar_s = feature_extractor(encoding)
 output = docformer(v_bar, t_bar, v_bar_s, t_bar_s)  # shape (1, 512, 768)
 ```
 
-See `examples` for usage.
-
 ##  License
 
 MIT
