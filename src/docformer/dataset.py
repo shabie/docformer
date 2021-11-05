@@ -222,41 +222,47 @@ def create_features(
                          add_special_tokens=False)
     # add CLS token manually to avoid autom. addition of SEP too (as in the paper)
     encoding["input_ids"] = [tokenizer.cls_token_id] + encoding["input_ids"][:-1]
-
+    input_ids = tokenizer(" ".join(words), truncation=True)["input_ids"][:-1]  # Combining the words which have been seperated at a particular character
+    
     # step 6: pad token_boxes up to the sequence length
-    assert len(encoding["input_ids"]) == len(token_boxes), "Length of input ids != Length of token boxes"  # check if number of tokens match
-    padding_length = max_seq_length - len(encoding["input_ids"])
+    assert len(input_ids) == len(token_boxes), "Length of input ids != Length of token boxes"  # check if number of tokens match
+    padding_length = max_seq_length - len(input_ids)
     token_boxes += [pad_token_box] * padding_length
     unnormalized_token_boxes += [pad_token_box] * padding_length
     encoding["bbox"] = token_boxes
     encoding["unnormalized_token_boxes"] = unnormalized_token_boxes
-
-    assert len(encoding["mlm_labels"]) == max_seq_length , "Length of mlm_labels != Length of max_seq_length"
+   
+    # step 7: apply mask for the sake of pre-training
+    if apply_mask_for_mlm:
+        encoding["mlm_labels"] = encoding["input_ids"]
+        encoding["input_ids"] = apply_mask(encoding["input_ids"], tokenizer)
+        assert len(encoding["mlm_labels"]) == max_seq_length , "Length of mlm_labels != Length of max_seq_length"
+       
     assert len(encoding["input_ids"]) == max_seq_length,"Length of input_ids != Length of max_seq_length"
     assert len(encoding["attention_mask"]) == max_seq_length,"Length of attention mask != Length of max_seq_length"
     assert len(encoding["token_type_ids"]) == max_seq_length, "Length of token type ids != Length of max_seq_length"
     assert len(encoding["bbox"]) == max_seq_length, "Length of bbox != Length of max_seq_length"
 
-    # step 7: normalize the image
+    # step 8: normalize the image
     encoding["resized_scaled_img"] = ToTensor()(resized_image) / 255.0
 
-    # step 8: apply mask for the sake of pre-training
+    # step 9: apply mask for the sake of pre-training
     if apply_mask_for_mlm:
         encoding["mlm_labels"] = encoding["input_ids"]
         encoding["input_ids"] = apply_mask(encoding["input_ids"], tokenizer)
 
-    # step 9: rescale and align the bounding boxes to match the resized image size (typically 224x224)
+    # step 10: rescale and align the bounding boxes to match the resized image size (typically 224x224)
     resized_and_aligned_bboxes = []
     for bbox in unnormalized_token_boxes:
         resized_and_aligned_bboxes.append(resize_align_bbox(bbox, original_image, target_size))
     encoding["resized_and_aligned_bounding_boxes"] = resized_and_aligned_bboxes
     
-    # step 10: add the relative distances in the normalized grid
+    # step 11: add the relative distances in the normalized grid
     bboxes_centroids = get_centroid(resized_and_aligned_bboxes)
     pad_token_start_index = get_pad_token_id_start_index(words, encoding, tokenizer)
     a_rel_x, a_rel_y = get_relative_distance(resized_and_aligned_bboxes, bboxes_centroids, pad_token_start_index)
 
-    # step 11: convert all to tensors
+    # step 12: convert all to tensors
     for k, v in encoding.items():
         encoding[k] = torch.as_tensor(encoding[k])
 
@@ -267,20 +273,20 @@ def create_features(
     assert torch.lt(encoding["x_features"], 0).sum().item() == 0
     assert torch.lt(encoding["y_features"], 0).sum().item() == 0
 
-    # step 12: add tokens for debugging
+    # step 13: add tokens for debugging
     if extras_for_debugging:
         input_ids = encoding["mlm_labels"] if apply_mask_for_mlm else encoding["input_ids"]
         encoding["tokens_without_padding"] = ["[CLS]"] + tokenizer.convert_ids_to_tokens(input_ids)
         encoding["words"] = words
 
-    # step 13: add extra dim for batch
+    # step 14: add extra dim for batch
     if add_batch_dim:
         encoding["x_features"].unsqueeze_(0)
         encoding["y_features"].unsqueeze_(0)
         encoding["input_ids"].unsqueeze_(0)
         encoding["resized_scaled_img"].unsqueeze_(0)
 
-    # step 14: save to disk
+    # step 15: save to disk
     if save_to_disk:
         os.makedirs(path_to_save, exist_ok=True)
         image_name = os.path.basename(image)
