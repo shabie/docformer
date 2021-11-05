@@ -26,7 +26,7 @@ config = {
   "hidden_dropout_prob": 0.1,
   "hidden_size": 768,
   "image_feature_pool_shape": [7, 7, 256],
-  "intermediate_ff_size_factor": 3,  # default ought to be 4
+  "intermediate_ff_size_factor": 4,
   "max_2d_position_embeddings": 1000,
   "max_position_embeddings": 512,
   "max_relative_positions": 8,
