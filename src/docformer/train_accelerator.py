@@ -15,20 +15,14 @@ import numpy as np
 from tqdm.auto import tqdm
 from torchvision.transforms import ToTensor
 import torch.nn.functional as F
-
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.models as models
-from accelerate import Accelerator
 from einops import rearrange
 from einops import rearrange as rearr
-from PIL import Image
 from sklearn.model_selection import train_test_split as tts
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import ToTensor
-
 from modeling import DocFormer
 
 batch_size = 9
