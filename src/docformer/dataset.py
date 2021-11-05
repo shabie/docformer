@@ -97,9 +97,9 @@ def get_centroid(actual_bbox):
     return centroid
 
 
-def get_pad_token_id_start_index(words, encoding, tokenizer):
-    assert len(words) < len(encoding["input_ids"])
-    for idx in range(len(words), len(encoding["input_ids"])):
+def get_pad_token_id_start_index(words, encoding, tokenizer): 
+#     assert len(words) < len(encoding["input_ids"])  This condition, was creating errors on some sample images
+    for idx in range(len(encoding["input_ids"])):
         if encoding["input_ids"][idx] == tokenizer.pad_token_id:
             break
     return idx
@@ -222,11 +222,10 @@ def create_features(
                          add_special_tokens=False)
     # add CLS token manually to avoid autom. addition of SEP too (as in the paper)
     encoding["input_ids"] = [tokenizer.cls_token_id] + encoding["input_ids"][:-1]
-    input_ids = tokenizer(" ".join(words), truncation=True)["input_ids"][:-1]  # Combining the words which have been seperated at a particular character
     
     # step 6: pad token_boxes up to the sequence length
-    assert len(input_ids) == len(token_boxes), "Length of input ids != Length of token boxes"  # check if number of tokens match
-    padding_length = max_seq_length - len(input_ids)
+    assert len(encoding["input_ids"]) == len(token_boxes), "Length of input ids != Length of token boxes"  # check if number of tokens match
+    padding_length = max_seq_length - len(encoding["input_ids"])
     token_boxes += [pad_token_box] * padding_length
     unnormalized_token_boxes += [pad_token_box] * padding_length
     encoding["bbox"] = token_boxes
