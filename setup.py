@@ -17,7 +17,8 @@ setup(
   install_requires=[
     'einops>=0.3',
     'torch>=1.6',
-    'torchvision'
+    'torchvision',
+    'transformers',
   ],
   classifiers=[
     'Development Status :: 4 - Beta',
