@@ -33,6 +33,11 @@ def resize_align_bbox(bbox, original_image, target_size):
     return [x, y, xmax, ymax]
 
 
+def get_topleft_bottomright_coordinates(df_row):
+    left, top, width, height = df_row["left"], df_row["top"], df_row["width"], df_row["height"]
+    return [left, top, left + width, top + height]
+
+
 def apply_ocr(image_fp):
     """
     Returns words and its bounding boxes from an image
@@ -41,24 +46,13 @@ def apply_ocr(image_fp):
     width, height = image.size
 
     ocr_df = pytesseract.image_to_data(image, output_type="data.frame")
-    float_cols = ocr_df.select_dtypes("float").columns
     ocr_df = ocr_df.dropna().reset_index(drop=True)
+    float_cols = ocr_df.select_dtypes("float").columns
     ocr_df[float_cols] = ocr_df[float_cols].round(0).astype(int)
     ocr_df = ocr_df.replace(r"^\s*$", np.nan, regex=True)
     ocr_df = ocr_df.dropna().reset_index(drop=True)
-    words = list(ocr_df.text)
-    words = [str(w) for w in words]
-    coordinates = ocr_df[["left", "top", "width", "height"]]
-    actual_bboxes = []
-    for idx, row in coordinates.iterrows():
-        x, y, w, h = tuple(row)  # the row comes in (left, top, width, height) format
-        actual_bbox = [
-            x,
-            y,
-            x + w,
-            y + h,
-        ]  # we turn it into (left, top, left+width, top+height) to get the actual box
-        actual_bboxes.append(actual_bbox)
+    words = list(ocr_df.text.apply(str))
+    actual_bboxes = ocr_df.apply(get_topleft_bottomright_coordinates, axis=1).tolist()
 
     # add as extra columns
     assert len(words) == len(actual_bboxes)
@@ -69,22 +63,21 @@ def get_tokens_with_bboxes(tokenizer,
                            words,
                            unnormalized_word_boxes,
                            normalized_word_boxes):
-    token_boxes = []
-    final_word_tokens = []
+
+    normalized_token_boxes = []
     unnormalized_token_boxes = []
     trio = zip(words, unnormalized_word_boxes, normalized_word_boxes)
-    for word, unnormalized_box, box in trio:
+
+    for word, unnormalized_box, normalized_box in trio:
         word_tokens = tokenizer.tokenize(word)
-        final_word_tokens.extend(word_tokens)
         unnormalized_token_boxes.extend(
             unnormalized_box for _ in range(len(word_tokens))
         )
-        token_boxes.extend(box for _ in range(len(word_tokens)))
+        normalized_token_boxes.extend(normalized_box for _ in range(len(word_tokens)))
 
     return (
-        token_boxes,
+        normalized_token_boxes,
         unnormalized_token_boxes,
-        final_word_tokens,
     )
 
 
@@ -201,7 +194,7 @@ def create_features(
     assert len(words) == len(normalized_word_boxes), "Length of words != Length of normalized words"
 
     # step 4: tokenize words and get their bounding boxes (one word may split into multiple tokens)
-    token_boxes, unnormalized_token_boxes, final_word_tokens = get_tokens_with_bboxes(
+    token_boxes, unnormalized_token_boxes = get_tokens_with_bboxes(
         tokenizer, words, unnormalized_word_boxes, normalized_word_boxes
     )
 
@@ -222,7 +215,7 @@ def create_features(
                          add_special_tokens=False)
     # add CLS token manually to avoid autom. addition of SEP too (as in the paper)
     encoding["input_ids"] = [tokenizer.cls_token_id] + encoding["input_ids"][:-1]
-    
+
     # step 6: pad token_boxes up to the sequence length
     assert len(encoding["input_ids"]) == len(token_boxes), "Length of input ids != Length of token boxes"  # check if number of tokens match
     padding_length = max_seq_length - len(encoding["input_ids"])

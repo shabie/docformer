@@ -27,7 +27,7 @@ pip install git+https://github.com/shabie/docformer
 
 ```python
 from docformer import modeling, dataset
-from transformers import BertTokenizer
+from transformers import BertTokenizerFast
 
 
 config = {
@@ -49,7 +49,7 @@ config = {
 
 fp = "filepath/to/the/image.tif"
 
-tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
 encoding = dataset.create_features(fp, tokenizer)
 
 feature_extractor = modeling.ExtractFeatures(config)
