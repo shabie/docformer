@@ -255,7 +255,7 @@ def create_features(
     # step 13: add tokens for debugging
     if extras_for_debugging:
         input_ids = encoding["mlm_labels"] if apply_mask_for_mlm else encoding["input_ids"]
-        encoding["tokens_without_padding"] = ["[CLS]"] + tokenizer.convert_ids_to_tokens(input_ids)
+        encoding["tokens_without_padding"] = tokenizer.convert_ids_to_tokens(input_ids)
         encoding["words"] = words
 
     # step 14: add extra dim for batch
