@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 import os
 import pickle
+from functools import lru_cache
 import pytesseract
 import numpy as np
 from PIL import Image
 import torch
 from torchvision.transforms import ToTensor
+
+PAD_TOKEN_BOX = [0, 0, 0, 0]
+GRID_SIZE = 1000
 
 
 def normalize_box(box, width, height, size=1000):
@@ -21,11 +25,11 @@ def normalize_box(box, width, height, size=1000):
     ]
 
 
-def resize_align_bbox(bbox, original_image, target_size):
-    x_, y_ = original_image.size
-    x_scale = target_size / x_
-    y_scale = target_size / y_
-    orig_left, orig_top, orig_right, orig_bottom = tuple(bbox)
+@lru_cache(maxsize=512)
+def resize_align_bbox(bbox, orig_w, orig_h, target_w, target_h):
+    x_scale = target_w / orig_w
+    y_scale = target_h / orig_h
+    orig_left, orig_top, orig_right, orig_bottom = bbox
     x = int(np.round(orig_left * x_scale))
     y = int(np.round(orig_top * y_scale))
     xmax = int(np.round(orig_right * x_scale))
@@ -59,26 +63,19 @@ def apply_ocr(image_fp):
     return {"words": words, "bbox": actual_bboxes}
 
 
-def get_tokens_with_bboxes(tokenizer,
-                           words,
-                           unnormalized_word_boxes,
-                           normalized_word_boxes):
-
-    normalized_token_boxes = []
+def get_tokens_with_boxes(unnormalized_word_boxes, normalized_word_boxes, pad_token_box, word_ids=None):
     unnormalized_token_boxes = []
-    trio = zip(words, unnormalized_word_boxes, normalized_word_boxes)
+    normalized_token_boxes = []
+    for i, word_idx in enumerate(word_ids):
+        if word_idx is None:
+            # all remaining are padding tokens so why add them in a loop one by one
+            unnormalized_token_boxes.extend([pad_token_box] * word_ids - i)
+            normalized_token_boxes.extend([pad_token_box] * word_ids - i)
+            break
+        unnormalized_token_boxes.append(unnormalized_word_boxes[word_idx])
+        normalized_token_boxes.append(normalized_word_boxes[word_idx])
 
-    for word, unnormalized_box, normalized_box in trio:
-        word_tokens = tokenizer.tokenize(word)
-        unnormalized_token_boxes.extend(
-            unnormalized_box for _ in range(len(word_tokens))
-        )
-        normalized_token_boxes.extend(normalized_box for _ in range(len(word_tokens)))
-
-    return (
-        normalized_token_boxes,
-        unnormalized_token_boxes,
-    )
+    return normalized_token_boxes, unnormalized_token_boxes
 
 
 def get_centroid(actual_bbox):
@@ -175,8 +172,6 @@ def create_features(
         extras_for_debugging=False,
 ):
 
-    pad_token_box = [0, 0, 0, 0]
-
     # step 1: read original image and extract OCR entries
     original_image = Image.open(image).convert("RGB")
     entries = apply_ocr(image)
@@ -189,38 +184,30 @@ def create_features(
     # step 3: normalize image to a grid of 1000 x 1000 (to avoid the problem of differently sized images)
     width, height = original_image.size
     normalized_word_boxes = [
-        normalize_box(bbox, width, height, 1000) for bbox in unnormalized_word_boxes
+        normalize_box(bbox, width, height, GRID_SIZE) for bbox in unnormalized_word_boxes
     ]
     assert len(words) == len(normalized_word_boxes), "Length of words != Length of normalized words"
 
     # step 4: tokenize words and get their bounding boxes (one word may split into multiple tokens)
-    token_boxes, unnormalized_token_boxes = get_tokens_with_bboxes(
-        tokenizer, words, unnormalized_word_boxes, normalized_word_boxes
-    )
-
-    # step 5: add special tokens and truncate seq. to maximum length
-    special_tokens_count = 1
-    remaining_length = max_seq_length - special_tokens_count
-    if len(token_boxes) > remaining_length:
-        token_boxes = token_boxes[: remaining_length]
-        unnormalized_token_boxes = unnormalized_token_boxes[: remaining_length]
-
-    token_boxes = [[0, 0, 0, 0]] + token_boxes
-    unnormalized_token_boxes = ([[0, 0, 0, 0]] + unnormalized_token_boxes)
     encoding = tokenizer(words,
                          padding="max_length",
                          max_length=max_seq_length,
                          is_split_into_words=True,
                          truncation=True,
                          add_special_tokens=False)
+    token_boxes, unnormalized_token_boxes = get_tokens_with_boxes(unnormalized_word_boxes,
+                                                                  normalized_word_boxes,
+                                                                  PAD_TOKEN_BOX,
+                                                                  encoding.word_ids())
+
+    # step 5: add special tokens and truncate seq. to maximum length
+    token_boxes = [[0, 0, 0, 0]] + token_boxes[:-1]
+    unnormalized_token_boxes = [[0, 0, 0, 0]] + unnormalized_token_boxes[:-1]
     # add CLS token manually to avoid autom. addition of SEP too (as in the paper)
     encoding["input_ids"] = [tokenizer.cls_token_id] + encoding["input_ids"][:-1]
 
-    # step 6: pad token_boxes up to the sequence length
-    assert len(encoding["input_ids"]) == len(token_boxes), "Length of input ids != Length of token boxes"  # check if number of tokens match
-    padding_length = max_seq_length - len(encoding["input_ids"])
-    token_boxes += [pad_token_box] * padding_length
-    unnormalized_token_boxes += [pad_token_box] * padding_length
+    # step 6: Add bounding boxes to the encoding dict
+    assert len(encoding["input_ids"]) == len(token_boxes), "Length of input ids != Length of token boxes"
     encoding["bbox"] = token_boxes
     encoding["unnormalized_token_boxes"] = unnormalized_token_boxes
    
@@ -246,7 +233,7 @@ def create_features(
     # step 10: rescale and align the bounding boxes to match the resized image size (typically 224x224)
     resized_and_aligned_bboxes = []
     for bbox in unnormalized_token_boxes:
-        resized_and_aligned_bboxes.append(resize_align_bbox(bbox, original_image, target_size))
+        resized_and_aligned_bboxes.append(resize_align_bbox(tuple(bbox), *original_image.size, target_size, target_size))
     encoding["resized_and_aligned_bounding_boxes"] = resized_and_aligned_bboxes
     
     # step 11: add the relative distances in the normalized grid
@@ -289,7 +276,12 @@ def create_features(
 
 
 if __name__ == '__main__':
-    from transformers import BertTokenizer
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
     fp = '/media/shabie/S&G/docformer/data/rvl-cdip/images/imagesa/a/a/a/aaa06d00/50486482-6482.tif'
+    from transformers import BertTokenizerFast
+    import yappi
+    tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
+    yappi.set_clock_type("wall")  # Use set_clock_type("wall") for wall time
+    yappi.start()
     encoding = create_features(fp, tokenizer)
+    yappi.get_func_stats().print_all()
+    yappi.get_thread_stats().print_all()
