@@ -65,6 +65,7 @@ def apply_ocr(image_fp):
 
 
 def get_tokens_with_boxes(unnormalized_word_boxes, normalized_word_boxes, pad_token_box, word_ids):
+    assert len(unnormalized_word_boxes) == len(normalized_word_boxes) == len(set(word_ids))
     unnormalized_token_boxes = []
     normalized_token_boxes = []
     for i, word_idx in enumerate(word_ids):
