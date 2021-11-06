@@ -26,7 +26,7 @@ def normalize_box(box, width, height, size=1000):
     ]
 
 
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=10)
 def resize_align_bbox(bbox, orig_w, orig_h, target_w, target_h):
     x_scale = target_w / orig_w
     y_scale = target_h / orig_h
@@ -64,18 +64,20 @@ def apply_ocr(image_fp):
     return {"words": words, "bbox": actual_bboxes}
 
 
-def get_tokens_with_boxes(unnormalized_word_boxes, normalized_word_boxes, pad_token_box, word_ids=None):
+def get_tokens_with_boxes(unnormalized_word_boxes, normalized_word_boxes, pad_token_box, word_ids):
     unnormalized_token_boxes = []
     normalized_token_boxes = []
     for i, word_idx in enumerate(word_ids):
         if word_idx is None:
-            # all remaining are padding tokens so why add them in a loop one by one
-            unnormalized_token_boxes.extend([pad_token_box] * word_ids - i)
-            normalized_token_boxes.extend([pad_token_box] * word_ids - i)
             break
         unnormalized_token_boxes.append(unnormalized_word_boxes[word_idx])
         normalized_token_boxes.append(normalized_word_boxes[word_idx])
 
+    # all remaining are padding tokens so why add them in a loop one by one
+    num_pad_tokens = len(word_ids) - i - 1
+    if num_pad_tokens > 0:
+        unnormalized_token_boxes.extend([pad_token_box] * num_pad_tokens)
+        normalized_token_boxes.extend([pad_token_box] * num_pad_tokens)
     return normalized_token_boxes, unnormalized_token_boxes
 
 
