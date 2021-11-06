@@ -9,6 +9,7 @@ import torch
 from torchvision.transforms import ToTensor
 
 PAD_TOKEN_BOX = [0, 0, 0, 0]
+CLS_TOKEN_BOX = [0, 0, 0, 0]
 GRID_SIZE = 1000
 
 
@@ -201,8 +202,8 @@ def create_features(
                                                                   encoding.word_ids())
 
     # step 5: add special tokens and truncate seq. to maximum length
-    token_boxes = [[0, 0, 0, 0]] + token_boxes[:-1]
-    unnormalized_token_boxes = [[0, 0, 0, 0]] + unnormalized_token_boxes[:-1]
+    token_boxes = [CLS_TOKEN_BOX] + token_boxes[:-1]
+    unnormalized_token_boxes = [CLS_TOKEN_BOX] + unnormalized_token_boxes[:-1]
     # add CLS token manually to avoid autom. addition of SEP too (as in the paper)
     encoding["input_ids"] = [tokenizer.cls_token_id] + encoding["input_ids"][:-1]
 
