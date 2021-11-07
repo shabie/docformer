@@ -56,7 +56,7 @@ def apply_ocr(image_fp):
     ocr_df[float_cols] = ocr_df[float_cols].round(0).astype(int)
     ocr_df = ocr_df.replace(r"^\s*$", np.nan, regex=True)
     ocr_df = ocr_df.dropna().reset_index(drop=True)
-    words = list(ocr_df.text.apply(str))
+    words = list(ocr_df.text.apply(lambda x: str(x).strip()))
     actual_bboxes = ocr_df.apply(get_topleft_bottomright_coordinates, axis=1).tolist()
 
     # add as extra columns
@@ -219,10 +219,10 @@ def create_features(
     if apply_mask_for_mlm:
         encoding["mlm_labels"] = encoding["input_ids"]
         encoding["input_ids"] = apply_mask(encoding["input_ids"], tokenizer)
-        assert len(encoding["mlm_labels"]) == max_seq_length , "Length of mlm_labels != Length of max_seq_length"
+        assert len(encoding["mlm_labels"]) == max_seq_length, "Length of mlm_labels != Length of max_seq_length"
        
-    assert len(encoding["input_ids"]) == max_seq_length,"Length of input_ids != Length of max_seq_length"
-    assert len(encoding["attention_mask"]) == max_seq_length,"Length of attention mask != Length of max_seq_length"
+    assert len(encoding["input_ids"]) == max_seq_length, "Length of input_ids != Length of max_seq_length"
+    assert len(encoding["attention_mask"]) == max_seq_length, "Length of attention mask != Length of max_seq_length"
     assert len(encoding["token_type_ids"]) == max_seq_length, "Length of token type ids != Length of max_seq_length"
     assert len(encoding["bbox"]) == max_seq_length, "Length of bbox != Length of max_seq_length"
 
