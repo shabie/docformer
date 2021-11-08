@@ -18,4 +18,5 @@
 ```python
 3. modeling.py
 ```
-
+* This file is the brain of everything in this repo, the file contains the various functions, which have been written with least approximation in mind, and as close to the paper, it contains the multi-head attention, the various embedding functions, and a lot of stuffs, which are mentioned in the paper. In order, to understand this file properly, one of the suggestion is to, open the code and the paper side by side, and that would work.
+* And, for the task specific requirements, one can import "DocFormerEncoder", and attach one head for the task-specific requirement, however, the last function ```python Decoder``` is a work in progress
