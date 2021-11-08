@@ -20,3 +20,14 @@
 ```
 * This file is the brain of everything in this repo, the file contains the various functions, which have been written with least approximation in mind, and as close to the paper, it contains the ```multi-head attention```, the various embedding functions, and a lot of stuffs, which are mentioned in the paper. In order, to understand this file properly, one of the suggestion is to, open the code and the paper side by side, and that would work.
 * And, for the task specific requirements, one can import ```DocFormerEncoder```, and attach one head for the task-specific requirement, however, the last function ```Decoder``` is a work in progress, which is for the Image Reconstruction purpose as mentioned in the paper (in the pre-training part)
+
+```python
+4. modeling_pl.py
+```
+* This file is basically, for the parallelization of the training and validation part, so that the utilization of multiple GPUs becomes easy
+* This file contains the integration of PyTorch Lightening, with the DocFormer model, so that the coding part becomes less and the task specific things can be done.
+* For task specific requirements, one can modify the ```Model``` class, with the modification being in the ```training``` and ```validation``` step, where the specific loss functions can be integrated and thats it!!!
+
+
+
+
