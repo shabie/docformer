@@ -19,7 +19,7 @@
 3. modeling.py
 ```
 * This file is the brain of everything in this repo, the file contains the various functions, which have been written with least approximation in mind, and as close to the paper, it contains the ```multi-head attention```, the various embedding functions, and a lot of stuffs, which are mentioned in the paper. In order, to understand this file properly, one of the suggestion is to, open the code and the paper side by side, and that would work.
-* And, for the task specific requirements, one can import ```DocFormerEncoder```, and attach one head for the task-specific requirement, however, the last function ```Decoder``` is a work in progress, which is for the Image Reconstruction purpose as mentioned in the paper (in the pre-training part)
+* And, for the task specific requirements, one can import ```DocFormerEncoder```, and attach one head for the task-specific requirement, however, the last function ```ShallowDecoder``` is a work in progress, which is for the Image Reconstruction purpose as mentioned in the paper (in the pre-training part)
 
 ```python
 4. modeling_pl.py
@@ -29,5 +29,12 @@
 * For task specific requirements, one can modify the ```Model``` class, with the modification being in the ```training``` and ```validation``` step, where the specific loss functions can be integrated and thats it!!!
 
 
-
-
+```python
+5. train_accelerator.py
+and 
+6. train_accelerator_mlm_ir.py
+```
+* These files are also codes for the purpose of training so that the coding requirements becomes less.
+* The only thing is that, these code inherits the ```Accelerator``` of "Hugging Face", for the purpose of Parallelization of the task to multiple GPUs
+* ```train_accelerator.py``` contains the function of running the code of Pre-training the model with ```MLM``` task
+* ```train_accelerator_mlm_ir.py``` contains the function of running the code of Pre-training the model with ```MLM and Image Reconstruction (IR)``` task, however we are thinking of making a file which contains the options of training according to specific task
