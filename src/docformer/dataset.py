@@ -65,7 +65,8 @@ def apply_ocr(image_fp):
 
 
 def get_tokens_with_boxes(unnormalized_word_boxes, normalized_word_boxes, pad_token_box, word_ids):
-    assert len(unnormalized_word_boxes) == len(normalized_word_boxes) == len(set(word_ids))
+    # assert len(unnormalized_word_boxes) == len(normalized_word_boxes) == len(word_ids), this should not be applied, since word_ids may have higher 
+    # length and the bbox corresponding to them may not exist
     unnormalized_token_boxes = []
     normalized_token_boxes = []
     for i, word_idx in enumerate(word_ids):
@@ -79,6 +80,11 @@ def get_tokens_with_boxes(unnormalized_word_boxes, normalized_word_boxes, pad_to
     if num_pad_tokens > 0:
         unnormalized_token_boxes.extend([pad_token_box] * num_pad_tokens)
         normalized_token_boxes.extend([pad_token_box] * num_pad_tokens)
+        
+    if len(normalized_token_boxes)<max_seq_len:
+        normalized_token_boxes.extend([pad_token_box] * (max_seq_len-len(normalized_token_boxes)))
+        unnormalized_token_boxes.extend([pad_token_box] * (max_seq_len-len(unnormalized_token_boxes)))
+        
     return normalized_token_boxes, unnormalized_token_boxes
 
 
@@ -199,6 +205,7 @@ def create_features(
                          is_split_into_words=True,
                          truncation=True,
                          add_special_tokens=False)
+    
     token_boxes, unnormalized_token_boxes = get_tokens_with_boxes(unnormalized_word_boxes,
                                                                   normalized_word_boxes,
                                                                   PAD_TOKEN_BOX,
