@@ -73,12 +73,12 @@ MIT
 ## Citations
 
 ```bibtex
-@misc{appalaraju2021docformer,
-    title   = {DocFormer: End-to-End Transformer for Document Understanding},
-    author  = {Srikar Appalaraju and Bhavan Jasani and Bhargava Urala Kota and Yusheng Xie and R. Manmatha},
-    year    = {2021},
-    eprint  = {2106.11539},
-    archivePrefix = {arXiv},
-    primaryClass = {cs.CV}
+@InProceedings{Appalaraju_2021_ICCV,
+    author    = {Appalaraju, Srikar and Jasani, Bhavan and Kota, Bhargava Urala and Xie, Yusheng and Manmatha, R.},
+    title     = {DocFormer: End-to-End Transformer for Document Understanding},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2021},
+    pages     = {993-1003}
 }
 ```
