@@ -473,6 +473,28 @@ class DocFormerForClassification(nn.Module):
         output = self.dropout(output)
         output = self.classifier(output)
         return output
+    
+    
+class DocFormer(nn.Module):
+    
+    '''
+    Easily boiler plate, because this model will just take as an input, the dictionary which is obtained from create_features function
+    '''
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.extract_feature = ExtractFeatures(config)
+        self.encoder = DocFormerEncoder(config)
+        self.dropout = nn.Dropout(config['hidden_dropout_prob'])
+
+    def forward(self, x):
+        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x)
+        features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
+        for f in features:
+            features[f] = features[f]
+        output = self.encoder(features['t_bar'], features['v_bar'], features['t_bar_s'], features['v_bar_s'])
+        output = self.dropout(output)
+        return output
 
     
     
