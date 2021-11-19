@@ -57,7 +57,7 @@ def apply_ocr(image_fp):
     ocr_df = ocr_df.replace(r"^\s*$", np.nan, regex=True)
     ocr_df = ocr_df.dropna().reset_index(drop=True)
     words = list(ocr_df.text.apply(lambda x: str(x).strip()))
-    actual_bboxes = ocr_df.apply(get_topleft_bottomright_coordinates, axis=1).tolist()
+    actual_bboxes = ocr_df.apply(get_topleft_bottomright_coordinates, axis=1).values.tolist()
 
     # add as extra columns
     assert len(words) == len(actual_bboxes)
