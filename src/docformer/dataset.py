@@ -64,7 +64,7 @@ def apply_ocr(image_fp):
     return {"words": words, "bbox": actual_bboxes}
 
 
-def get_tokens_with_boxes(unnormalized_word_boxes, normalized_word_boxes, pad_token_box, word_ids):
+def get_tokens_with_boxes(unnormalized_word_boxes, normalized_word_boxes, pad_token_box, word_ids,max_seq_len = 512):
     # assert len(unnormalized_word_boxes) == len(normalized_word_boxes) == len(word_ids), this should not be applied, since word_ids may have higher 
     # length and the bbox corresponding to them may not exist
     unnormalized_token_boxes = []
