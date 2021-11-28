@@ -21,13 +21,15 @@ And then,
 
 ```python
 !git clone https://github.com/shabie/docformer.git 
-import sys 
-sys.path.extend(['docformer/src/docformer/'])
+
+
 ```
 
 ## Usage
 
 ```python
+import sys 
+sys.path.extend(['docformer/src/docformer/'])
 from docformer import modeling, dataset
 from transformers import BertTokenizerFast
 
