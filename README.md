@@ -30,7 +30,7 @@ And then,
 ```python
 import sys 
 sys.path.extend(['docformer/src/docformer/'])
-Import modeling, dataset
+import modeling, dataset
 from transformers import BertTokenizerFast
 
 
