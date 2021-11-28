@@ -20,7 +20,9 @@ sudo apt install tesseract-ocr
 And then,
 
 ```python
-pip install git+https://github.com/shabie/docformer
+!git clone https://github.com/shabie/docformer.git 
+import sys 
+sys.path.extend(['docformer/src/docformer/'])
 ```
 
 ## Usage
