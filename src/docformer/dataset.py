@@ -244,7 +244,9 @@ def create_features(
     # step 10: rescale and align the bounding boxes to match the resized image size (typically 224x224)
     resized_and_aligned_bboxes = []
     for bbox in unnormalized_token_boxes:
-        resized_and_aligned_bboxes.append(resize_align_bbox(tuple(bbox), *original_image.size, target_size, target_size))
+        # performing the normalization of the bounding box
+        output_bbox = resize_align_bbox(tuple(bbox), *original_image.size, target_size, target_size)
+        resized_and_aligned_bboxes.append(normalize_box(output_bbox, target_size, target_size, size=1))
     encoding["resized_and_aligned_bounding_boxes"] = resized_and_aligned_bboxes
     
     # step 11: add the relative distances in the normalized grid
