@@ -443,8 +443,21 @@ class ExtractFeatures(nn.Module):
         self.language_feature = LanguageFeatureExtractor(config['vocab_size'], config['hidden_size'])
         self.spatial_feature = DocFormerEmbeddings(config)
 
-    def forward(self, encoding):
-        image = encoding['resized_scaled_img']
+    def forward(self, encoding,use_tdi = False):
+        
+        '''
+        
+        * use_tdi: If you want to use the forward propagation to perform the task for TDI (Text Describe Image),
+        we just need to add a new key in 'encoding', and it is named as "d_resized_scaled_img" (dummy_resized_scaled_img).
+    
+        * For more details, of how to generate the "d_resized_scaled_img", refer the readme
+        '''
+        
+        if use_tdi:
+            image = encoding['d_resized_scaled_img']
+        else:    
+            image = encoding['resized_scaled_img']
+            
         language = encoding['input_ids']
         x_feature = encoding['x_features']
         y_feature = encoding['y_features']
@@ -464,8 +477,8 @@ class DocFormerForClassification(nn.Module):
         self.dropout = nn.Dropout(config['hidden_dropout_prob'])
         self.classifier = nn.Linear(config['hidden_size'], num_classes)
 
-    def forward(self, x):
-        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x)
+    def forward(self, x ,use_tdi = False):
+        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x,use_tdi)
         features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
         for f in features:
             features[f] = features[f]
@@ -478,7 +491,7 @@ class DocFormerForClassification(nn.Module):
 class DocFormer(nn.Module):
     
     '''
-    Easily boiler plate, because this model will just take as an input, the dictionary which is obtained from create_features function
+    Easy boiler plate, because this model will just take as an input, the dictionary which is obtained from create_features function
     '''
     def __init__(self, config):
         super().__init__()
@@ -487,8 +500,8 @@ class DocFormer(nn.Module):
         self.encoder = DocFormerEncoder(config)
         self.dropout = nn.Dropout(config['hidden_dropout_prob'])
 
-    def forward(self, x):
-        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x)
+    def forward(self, x ,use_tdi=False):
+        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x,use_tdi)
         features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
         for f in features:
             features[f] = features[f]
@@ -550,8 +563,8 @@ class DocFormer_For_IR(nn.Module):
         self.classifier = nn.Linear(in_features=68, out_features=num_classes)
         self.decoder = ShallowDecoder().cuda()
 
-    def forward(self, x):
-        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x)
+    def forward(self, x,use_tdi=False):
+        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x,use_tdi)
         features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
         for f in features:
             features[f] = features[f]
