@@ -53,8 +53,9 @@ How to use it?
 
 * i.e in terms of pseduocode,
 Assume, that  
-* l-> list of dictinary format, data points of docformer
 ```python
+
+l-> list of dictionary format, data points of docformer
 d_arr, labels = labels_for_tdi(n)
 for i, j in enumerate(d_arr):
     l[i]['d_resized_scaled_img'] = l[j]['resized_scaled_img']
