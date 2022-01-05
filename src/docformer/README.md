@@ -38,3 +38,27 @@ and
 * The only thing is that, these code inherits the ```Accelerator``` of "Hugging Face", for the purpose of Parallelization of the task to multiple GPUs
 * ```train_accelerator.py``` contains the function of running the code of Pre-training the model with ```MLM``` task
 * ```train_accelerator_mlm_ir.py``` contains the function of running the code of Pre-training the model with ```MLM and Image Reconstruction (IR)``` task, however we are thinking of making a file which contains the options of training according to specific task
+
+
+
+```python
+7. utils.py
+```
+
+* File, which contains the utility function for performing the unsupervised task of Text Describe Image (as mentioned in the paper: DocFormer)
+
+How to use it?
+* Let us assume, that all the entries of the dataset have been stored somewhere.
+* Now, we can get the length of the entries, and that has to be passed to the function ```labels_for_tdi```, which would give the arguments as well as the labels, now, iterate through each of the arguments, and for ith entry, create a new entry in the dicitionary (data format for docformer, refer to dataset.py, create_features function), and map it to the resized_scaled_img of arr[i], 
+
+* i.e in terms of pseduocode,
+Assume, that  
+* l-> list of dictinary format, data points of docformer
+```python
+d_arr, labels = labels_for_tdi(n)
+for i, j in enumerate(d_arr):
+    l[i]['d_resized_scaled_img'] = l[j]['resized_scaled_img']
+    l[i]['label_for_tdi'] = labels[i]
+```
+
+And then, the rest follows by passing the argument `use_tdi`, for the model
