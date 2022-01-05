@@ -63,3 +63,11 @@ for i, j in enumerate(d_arr):
 ```
 
 And then, the rest follows by passing the argument `use_tdi`, for the model
+
+Using it with the model:
+For the purpose of integrating TDI with model, the following instruction would be helpful:
+
+Let us assume, we want to do MLM + IR + TDI:
+
+1. Attach a head, and forward propagate it, calculate the weighted loss of these two task, and store it
+2. In case of the second task, you have to forward propagate it again with the same dataset, but with the argument use_tdi = True, and calculate the binary cross entropy loss with the `label_for_tdi` key, and add the weighted sum of it to the store loss, and then backpropagate it
