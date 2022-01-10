@@ -234,7 +234,7 @@ def create_features(
     assert len(encoding["bbox"]) == max_seq_length, "Length of bbox != Length of max_seq_length"
 
     # step 8: normalize the image
-    encoding["resized_scaled_img"] = ToTensor()(resized_image) / 255.0
+    encoding["resized_scaled_img"] = ToTensor()(resized_image)
 
     # step 9: apply mask for the sake of pre-training
     if apply_mask_for_mlm:
