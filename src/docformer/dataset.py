@@ -106,51 +106,48 @@ def get_pad_token_id_start_index(words, encoding, tokenizer):
 
 
 def get_relative_distance(bboxes, centroids, pad_tokens_start_idx):
-    """
-    Note: We take absolute distances to avoid embedding problems.
-    Reason is that all we want to know is how FAR one word is
-    from the other (in x-dim). A change of line will be reflected
-    in the y-dim.
-    """
+
     a_rel_x = []
     a_rel_y = []
-    a_rel_x.append([0] * 8)  # For the "first" CLS token
-    a_rel_y.append([0] * 8)  # For the "first" CLS token
 
-    for i in range(1, len(bboxes)):
-        if i > pad_tokens_start_idx:
+    for i in range(0, len(bboxes)-1):
+        if i >= pad_tokens_start_idx:
             a_rel_x.append([0] * 8)
             a_rel_y.append([0] * 8)
             continue
 
         curr = bboxes[i]
-        prev = bboxes[i - 1]
+        next = bboxes[i+1]
+
+        
         a_rel_x.append(
             [
                 curr[0],  # top left x
                 curr[2],  # bottom right x
-                abs(curr[2] - curr[0]),  # width
-                abs(curr[0] - prev[0]),  # diff top left x
-                abs(curr[0] - prev[0]),  # diff bottom left x
-                abs(curr[2] - prev[2]),  # diff top right x
-                abs(curr[2] - prev[2]),  # diff bottom right x
-                abs(centroids[i][0] - centroids[i - 1][0]),
+                curr[2] - curr[0],  # width
+                next[0] - curr[0],  # diff top left x
+                next[0] - curr[0],  # diff bottom left x
+                next[2] - curr[2],  # diff top right x
+                next[2] - curr[2],  # diff bottom right x
+                centroids[i+1][0] - centroids[i][0],
             ]
         )
+
         a_rel_y.append(
             [
                 curr[1],  # top left y
                 curr[3],  # bottom right y
-                abs(curr[3] - curr[1]),  # height
-                abs(curr[1] - prev[1]),  # diff top left y
-                abs(curr[3] - prev[3]),  # diff bottom left y
-                abs(curr[1] - prev[1]),  # diff top right y
-                abs(curr[3] - prev[3]),  # diff bottom right y
-                abs(centroids[i][1] - centroids[i - 1][1]),
+                curr[3] - curr[1],  # height
+                next[1] - curr[1],  # diff top left y
+                next[3] - curr[3],  # diff bottom left y
+                next[1] - curr[1],  # diff top right y
+                next[3] - curr[3],  # diff bottom right y
+                centroids[i+1][1] - centroids[i][1],
             ]
         )
 
     return a_rel_x, a_rel_y
+     
 
 
 def apply_mask(inputs, tokenizer):
