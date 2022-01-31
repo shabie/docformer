@@ -145,7 +145,8 @@ def get_relative_distance(bboxes, centroids, pad_tokens_start_idx):
                 centroids[i+1][1] - centroids[i][1],
             ]
         )
-
+    a_rel_x.append([0]*8)
+    a_rel_y.append([0]*8)
     return a_rel_x, a_rel_y
      
 
