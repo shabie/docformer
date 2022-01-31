@@ -282,8 +282,12 @@ def create_features(
             pickle.dump(encoding, f)
 
     # step 16: keys to keep, resized_and_aligned_bounding_boxes have been added for the purpose to test if the bounding boxes are drawn correctly or not, it maybe removed
-    keys = ['resized_scaled_img', 'x_features','y_features','input_ids','resized_and_aligned_bounding_boxes','mlm_labels']
-
+    
+    keys = ['resized_scaled_img', 'x_features','y_features','input_ids','resized_and_aligned_bounding_boxes']
+    
+    if apply_mask_for_mlm:
+        keys.append('mlm_labels')
+    
     final_encoding = {k:encoding[k] for k in keys}
     
     del encoding
