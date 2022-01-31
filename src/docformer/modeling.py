@@ -8,7 +8,7 @@ from torch import Tensor
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
+DEVICE = device
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
