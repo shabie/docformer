@@ -14,13 +14,17 @@ class PositionalEncoding(nn.Module):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
         self.max_len = max_len
-        self.position_embeddings = nn.Embedding(max_len, d_model)
-        self.register_buffer("position_ids", torch.arange(max_len).expand((1, -1)))
+        self.d_model = d_model
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(1, max_len, d_model)
+        pe[0, :, 0::2] = torch.sin(position * div_term)
+        pe[0, :, 1::2] = torch.cos(position * div_term)
+        self.register_buffer("pe", pe)
         
 
     def forward(self) -> Tensor:
-        x = self.position_ids[0, : self.max_len]
-        x = self.position_embeddings(x)
+        x = self.pe[0, : self.max_len]
         return self.dropout(x).unsqueeze(0)
 
 
