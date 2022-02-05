@@ -7,9 +7,8 @@ from einops import rearrange
 from torch import Tensor
 
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = device
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
@@ -22,6 +21,7 @@ class PositionalEncoding(nn.Module):
         pe[0, :, 0::2] = torch.sin(position * div_term)
         pe[0, :, 1::2] = torch.cos(position * div_term)
         self.register_buffer("pe", pe)
+        
 
     def forward(self) -> Tensor:
         x = self.pe[0, : self.max_len]
@@ -31,7 +31,6 @@ class PositionalEncoding(nn.Module):
 class ResNetFeatureExtractor(nn.Module):
     def __init__(self):
         super().__init__()
-        self.image_size = (3, 224, 224)
 
         # Making the resnet 50 model, which was used in the docformer for the purpose of visual feature extraction
 
@@ -43,7 +42,7 @@ class ResNetFeatureExtractor(nn.Module):
 
         self.conv1 = nn.Conv2d(2048, 768, 1)
         self.relu1 = F.relu
-        self.linear1 = nn.Linear(49, 512)
+        self.linear1 = nn.Linear(192, 512)
 
     def forward(self, x):
         x = self.resnet50(x)
@@ -54,7 +53,6 @@ class ResNetFeatureExtractor(nn.Module):
         x = rearrange(x, "b e s -> b s e")  # b -> batch, e -> embedding dim, s -> sequence length
         return x
 
-
 class DocFormerEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
 
@@ -62,11 +60,6 @@ class DocFormerEmbeddings(nn.Module):
         super(DocFormerEmbeddings, self).__init__()
 
         self.config = config
-        self.word_embeddings = nn.Embedding(
-            config["vocab_size"],
-            config["hidden_size"],
-            padding_idx=config["pad_token_id"],
-        )
 
         self.position_embeddings_v = PositionalEncoding(
             d_model=config["hidden_size"],
@@ -74,24 +67,23 @@ class DocFormerEmbeddings(nn.Module):
             max_len=config["max_position_embeddings"],
         )
 
-        self.x_v = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.x_topleft_position_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.x_bottomright_position_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.w_position_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_topleft_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_bottomleft_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_topright_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_bottomright_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_centroid_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
+        self.x_topleft_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.x_bottomleft_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"]  + 1, config["shape_size"])
+        self.x_topright_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.x_bottomright_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.x_centroid_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
 
         self.y_topleft_position_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.y_bottomright_position_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.h_position_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_topleft_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_bottomleft_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_topright_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_bottomright_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_centroid_distance_to_prev_embeddings_v = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
+        self.y_topleft_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.y_bottomleft_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.y_topright_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.y_bottomright_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.y_centroid_distance_to_prev_embeddings_v = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
 
         self.position_embeddings_t = PositionalEncoding(
             d_model=config["hidden_size"],
@@ -102,67 +94,25 @@ class DocFormerEmbeddings(nn.Module):
         self.x_topleft_position_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.x_bottomright_position_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.w_position_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_topleft_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_bottomleft_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_topright_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_bottomright_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.x_centroid_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
+        self.x_topleft_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"]+1, config["shape_size"])
+        self.x_bottomleft_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"]+1, config["shape_size"])
+        self.x_topright_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.x_bottomright_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.x_centroid_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
 
         self.y_topleft_position_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.y_bottomright_position_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["coordinate_size"])
         self.h_position_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_topleft_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_bottomleft_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_topright_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_bottomright_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
-        self.y_centroid_distance_to_prev_embeddings_t = nn.Embedding(config["max_2d_position_embeddings"], config["shape_size"])
+        self.y_topleft_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.y_bottomleft_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.y_topright_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.y_bottomright_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
+        self.y_centroid_distance_to_prev_embeddings_t = nn.Embedding(2*config["max_2d_position_embeddings"] + 1, config["shape_size"])
 
         self.LayerNorm = nn.LayerNorm(config["hidden_size"], eps=config["layer_norm_eps"])
         self.dropout = nn.Dropout(config["hidden_dropout_prob"])
 
-        self.x_embedding_v = [
-            self.x_topleft_position_embeddings_v,
-            self.x_bottomright_position_embeddings_v,
-            self.w_position_embeddings_v,
-            self.x_topleft_distance_to_prev_embeddings_v,
-            self.x_bottomleft_distance_to_prev_embeddings_v,
-            self.x_topright_distance_to_prev_embeddings_v,
-            self.x_bottomright_distance_to_prev_embeddings_v,
-            self.x_centroid_distance_to_prev_embeddings_v,
-        ]
 
-        self.y_embedding_v = [
-            self.y_topleft_position_embeddings_v,
-            self.y_bottomright_position_embeddings_v,
-            self.h_position_embeddings_v,
-            self.y_topleft_distance_to_prev_embeddings_v,
-            self.y_bottomleft_distance_to_prev_embeddings_v,
-            self.y_topright_distance_to_prev_embeddings_v,
-            self.y_bottomright_distance_to_prev_embeddings_v,
-            self.y_centroid_distance_to_prev_embeddings_v,
-        ]
-
-        self.x_embedding_t = [
-            self.x_topleft_position_embeddings_t,
-            self.x_bottomright_position_embeddings_t,
-            self.w_position_embeddings_t,
-            self.x_topleft_distance_to_prev_embeddings_t,
-            self.x_bottomleft_distance_to_prev_embeddings_t,
-            self.x_topright_distance_to_prev_embeddings_t,
-            self.x_bottomright_distance_to_prev_embeddings_t,
-            self.x_centroid_distance_to_prev_embeddings_t,
-        ]
-
-        self.y_embedding_t = [
-            self.y_topleft_position_embeddings_t,
-            self.y_bottomright_position_embeddings_t,
-            self.h_position_embeddings_t,
-            self.y_topleft_distance_to_prev_embeddings_t,
-            self.y_bottomleft_distance_to_prev_embeddings_t,
-            self.y_topright_distance_to_prev_embeddings_t,
-            self.y_bottomright_distance_to_prev_embeddings_t,
-            self.y_centroid_distance_to_prev_embeddings_t,
-        ]
 
     def forward(self, x_feature, y_feature):
 
@@ -170,13 +120,9 @@ class DocFormerEmbeddings(nn.Module):
         Arguments:
         x_features of shape, (batch size, seq_len, 8)
         y_features of shape, (batch size, seq_len, 8)
-
         Outputs:
-
         (V-bar-s, T-bar-s) of shape (batch size, 512,768),(batch size, 512,768)
-
         What are the features:
-
         0 -> top left x/y
         1 -> bottom right x/y
         2 -> width/height
@@ -186,38 +132,148 @@ class DocFormerEmbeddings(nn.Module):
         6 -> diff bottom right x/y
         7 -> centroids diff x/y
         """
+
+
         batch, seq_len = x_feature.shape[:-1]
         hidden_size = self.config["hidden_size"]
         num_feat = x_feature.shape[-1]
         sub_dim = hidden_size // num_feat
+        
+        # Clamping and adding a bias for handling negative values
+        x_feature[:,:,3:] = torch.clamp(x_feature[:,:,3:],-self.config["max_2d_position_embeddings"],self.config["max_2d_position_embeddings"])
+        x_feature[:,:,3:]+= self.config["max_2d_position_embeddings"]
 
-        x_calculated_embedding_v = torch.zeros(batch, seq_len, hidden_size)
-        y_calculated_embedding_v = torch.zeros(batch, seq_len, hidden_size)
-        x_calculated_embedding_v.to(x_feature.device)
-        y_calculated_embedding_v.to(x_feature.device)
+        y_feature[:,:,3:] = torch.clamp(y_feature[:,:,3:],-self.config["max_2d_position_embeddings"],self.config["max_2d_position_embeddings"])
+        y_feature[:,:,3:]+= self.config["max_2d_position_embeddings"]
+        
+        x_topleft_position_embeddings_v = self.x_topleft_position_embeddings_v(x_feature[:,:,0])
+        x_bottomright_position_embeddings_v = self.x_bottomright_position_embeddings_v(x_feature[:,:,1])
+        w_position_embeddings_v = self.w_position_embeddings_v(x_feature[:,:,2])
+        x_topleft_distance_to_prev_embeddings_v = self.x_topleft_distance_to_prev_embeddings_v(x_feature[:,:,3])
+        x_bottomleft_distance_to_prev_embeddings_v = self.x_bottomleft_distance_to_prev_embeddings_v(x_feature[:,:,4])
+        x_topright_distance_to_prev_embeddings_v = self.x_topright_distance_to_prev_embeddings_v(x_feature[:,:,5])
+        x_bottomright_distance_to_prev_embeddings_v = self.x_bottomright_distance_to_prev_embeddings_v(x_feature[:,:,6])
+        x_centroid_distance_to_prev_embeddings_v = self.x_centroid_distance_to_prev_embeddings_v(x_feature[:,:,7])
 
-        for i in range(num_feat):
-            temp_x = x_feature[:, :, i]  # shape (batch_size, seq_len)
-            x_calculated_embedding_v[..., i * sub_dim: (i + 1) * sub_dim] = self.x_embedding_v[i](temp_x)
-            temp_y = y_feature[:, :, i]
-            y_calculated_embedding_v[..., i * sub_dim: (i + 1) * sub_dim] = self.y_embedding_v[i](temp_y)
+        x_calculated_embedding_v = torch.cat(
+            [
+             x_topleft_position_embeddings_v,
+             x_bottomright_position_embeddings_v,
+             w_position_embeddings_v,
+             x_topleft_distance_to_prev_embeddings_v,
+             x_bottomleft_distance_to_prev_embeddings_v,
+             x_topright_distance_to_prev_embeddings_v,
+             x_bottomright_distance_to_prev_embeddings_v ,
+             x_centroid_distance_to_prev_embeddings_v
+            ],
+            dim = -1
+        )
+
+        y_topleft_position_embeddings_v = self.y_topleft_position_embeddings_v(y_feature[:,:,0])
+        y_bottomright_position_embeddings_v = self.y_bottomright_position_embeddings_v(y_feature[:,:,1])
+        h_position_embeddings_v = self.h_position_embeddings_v(y_feature[:,:,2])
+        y_topleft_distance_to_prev_embeddings_v = self.y_topleft_distance_to_prev_embeddings_v(y_feature[:,:,3])
+        y_bottomleft_distance_to_prev_embeddings_v = self.y_bottomleft_distance_to_prev_embeddings_v(y_feature[:,:,4])
+        y_topright_distance_to_prev_embeddings_v = self.y_topright_distance_to_prev_embeddings_v(y_feature[:,:,5])
+        y_bottomright_distance_to_prev_embeddings_v = self.y_bottomright_distance_to_prev_embeddings_v(y_feature[:,:,6])
+        y_centroid_distance_to_prev_embeddings_v = self.y_centroid_distance_to_prev_embeddings_v(y_feature[:,:,7])
+
+        x_calculated_embedding_v = torch.cat(
+            [
+             x_topleft_position_embeddings_v,
+             x_bottomright_position_embeddings_v,
+             w_position_embeddings_v,
+             x_topleft_distance_to_prev_embeddings_v,
+             x_bottomleft_distance_to_prev_embeddings_v,
+             x_topright_distance_to_prev_embeddings_v,
+             x_bottomright_distance_to_prev_embeddings_v ,
+             x_centroid_distance_to_prev_embeddings_v
+            ],
+            dim = -1
+        )
+
+        y_calculated_embedding_v = torch.cat(
+            [
+             y_topleft_position_embeddings_v,
+             y_bottomright_position_embeddings_v,
+             h_position_embeddings_v,
+             y_topleft_distance_to_prev_embeddings_v,
+             y_bottomleft_distance_to_prev_embeddings_v,
+             y_topright_distance_to_prev_embeddings_v,
+             y_bottomright_distance_to_prev_embeddings_v ,
+             y_centroid_distance_to_prev_embeddings_v
+            ],
+            dim = -1
+        )
 
         v_bar_s = x_calculated_embedding_v + y_calculated_embedding_v + self.position_embeddings_v()
 
-        x_calculated_embedding_t = torch.zeros(batch, seq_len, hidden_size)
-        y_calculated_embedding_t = torch.zeros(batch, seq_len, hidden_size)
-        x_calculated_embedding_t.to(x_feature.device)
-        y_calculated_embedding_t.to(x_feature.device)
 
-        for i in range(num_feat):
-            temp_x = x_feature[:, :, i]  # shape (batch_size, seq_len)
-            x_calculated_embedding_t[..., i * sub_dim: (i + 1) * sub_dim] = self.x_embedding_t[i](temp_x)
-            temp_y = y_feature[:, :, i]
-            y_calculated_embedding_t[..., i * sub_dim: (i + 1) * sub_dim] = self.y_embedding_t[i](temp_y)
+
+        x_topleft_position_embeddings_t = self.x_topleft_position_embeddings_t(x_feature[:,:,0])
+        x_bottomright_position_embeddings_t = self.x_bottomright_position_embeddings_t(x_feature[:,:,1])
+        w_position_embeddings_t = self.w_position_embeddings_t(x_feature[:,:,2])
+        x_topleft_distance_to_prev_embeddings_t = self.x_topleft_distance_to_prev_embeddings_t(x_feature[:,:,3])
+        x_bottomleft_distance_to_prev_embeddings_t = self.x_bottomleft_distance_to_prev_embeddings_t(x_feature[:,:,4])
+        x_topright_distance_to_prev_embeddings_t = self.x_topright_distance_to_prev_embeddings_t(x_feature[:,:,5])
+        x_bottomright_distance_to_prev_embeddings_t = self.x_bottomright_distance_to_prev_embeddings_t(x_feature[:,:,6])
+        x_centroid_distance_to_prev_embeddings_t = self.x_centroid_distance_to_prev_embeddings_t(x_feature[:,:,7])
+
+        x_calculated_embedding_t = torch.cat(
+            [
+             x_topleft_position_embeddings_t,
+             x_bottomright_position_embeddings_t,
+             w_position_embeddings_t,
+             x_topleft_distance_to_prev_embeddings_t,
+             x_bottomleft_distance_to_prev_embeddings_t,
+             x_topright_distance_to_prev_embeddings_t,
+             x_bottomright_distance_to_prev_embeddings_t ,
+             x_centroid_distance_to_prev_embeddings_t
+            ],
+            dim = -1
+        )
+
+        y_topleft_position_embeddings_t = self.y_topleft_position_embeddings_t(y_feature[:,:,0])
+        y_bottomright_position_embeddings_t = self.y_bottomright_position_embeddings_t(y_feature[:,:,1])
+        h_position_embeddings_t = self.h_position_embeddings_t(y_feature[:,:,2])
+        y_topleft_distance_to_prev_embeddings_t = self.y_topleft_distance_to_prev_embeddings_t(y_feature[:,:,3])
+        y_bottomleft_distance_to_prev_embeddings_t = self.y_bottomleft_distance_to_prev_embeddings_t(y_feature[:,:,4])
+        y_topright_distance_to_prev_embeddings_t = self.y_topright_distance_to_prev_embeddings_t(y_feature[:,:,5])
+        y_bottomright_distance_to_prev_embeddings_t = self.y_bottomright_distance_to_prev_embeddings_t(y_feature[:,:,6])
+        y_centroid_distance_to_prev_embeddings_t = self.y_centroid_distance_to_prev_embeddings_t(y_feature[:,:,7])
+
+        x_calculated_embedding_t = torch.cat(
+            [
+             x_topleft_position_embeddings_t,
+             x_bottomright_position_embeddings_t,
+             w_position_embeddings_t,
+             x_topleft_distance_to_prev_embeddings_t,
+             x_bottomleft_distance_to_prev_embeddings_t,
+             x_topright_distance_to_prev_embeddings_t,
+             x_bottomright_distance_to_prev_embeddings_t ,
+             x_centroid_distance_to_prev_embeddings_t
+            ],
+            dim = -1
+        )
+
+        y_calculated_embedding_t = torch.cat(
+            [
+             y_topleft_position_embeddings_t,
+             y_bottomright_position_embeddings_t,
+             h_position_embeddings_t,
+             y_topleft_distance_to_prev_embeddings_t,
+             y_bottomleft_distance_to_prev_embeddings_t,
+             y_topright_distance_to_prev_embeddings_t,
+             y_bottomright_distance_to_prev_embeddings_t ,
+             y_centroid_distance_to_prev_embeddings_t
+            ],
+            dim = -1
+        )
 
         t_bar_s = x_calculated_embedding_t + y_calculated_embedding_t + self.position_embeddings_t()
-
+        
         return v_bar_s, t_bar_s
+
 
 
 # fmt: off
@@ -381,7 +437,6 @@ class MultiModalAttentionLayer(nn.Module):
         embeddings = rearrange(context, 'head b t d -> b t (head d)')
         return self.to_out(embeddings)
 
-
 class DocFormerEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -422,12 +477,15 @@ class DocFormerEncoder(nn.Module):
 
 
 class LanguageFeatureExtractor(nn.Module):
-    def __init__(self, max_vocab_size, hidden_dim):
+    def __init__(self):
         super().__init__()
-        self.embedding_vector = nn.Embedding(max_vocab_size,hidden_dim)
+        from transformers import LayoutLMForTokenClassification
+        layoutlm_dummy = LayoutLMForTokenClassification.from_pretrained("microsoft/layoutlm-base-uncased", num_labels=1)
+        self.embedding_vector = nn.Embedding.from_pretrained(layoutlm_dummy.layoutlm.embeddings.word_embeddings.weight)
 
     def forward(self, x):
         return self.embedding_vector(x)
+        
 
 
 class ExtractFeatures(nn.Module):
@@ -440,23 +498,12 @@ class ExtractFeatures(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.visual_feature = ResNetFeatureExtractor()
-        self.language_feature = LanguageFeatureExtractor(config['vocab_size'], config['hidden_size'])
+        self.language_feature = LanguageFeatureExtractor()
         self.spatial_feature = DocFormerEmbeddings(config)
 
-    def forward(self, encoding,use_tdi = False):
-        
-        '''
-        
-        * use_tdi: If you want to use the forward propagation to perform the task for TDI (Text Describe Image),
-        we just need to add a new key in 'encoding', and it is named as "d_resized_scaled_img" (dummy_resized_scaled_img).
-    
-        * For more details, of how to generate the "d_resized_scaled_img", refer the readme
-        '''
-        
-        if use_tdi:
-            image = encoding['d_resized_scaled_img']
-        else:    
-            image = encoding['resized_scaled_img']
+    def forward(self, encoding):
+      
+        image = encoding['resized_scaled_img']
             
         language = encoding['input_ids']
         x_feature = encoding['x_features']
@@ -464,28 +511,11 @@ class ExtractFeatures(nn.Module):
 
         v_bar = self.visual_feature(image)
         t_bar = self.language_feature(language)
+
         v_bar_s, t_bar_s = self.spatial_feature(x_feature, y_feature)
+        
         return v_bar, t_bar, v_bar_s, t_bar_s
 
-
-class DocFormerForClassification(nn.Module):
-    def __init__(self, config, num_classes):
-        super().__init__()
-        self.config = config
-        self.extract_feature = ExtractFeatures(config)
-        self.encoder = DocFormerEncoder(config)
-        self.dropout = nn.Dropout(config['hidden_dropout_prob'])
-        self.classifier = nn.Linear(config['hidden_size'], num_classes)
-
-    def forward(self, x ,use_tdi = False):
-        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x,use_tdi)
-        features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
-        for f in features:
-            features[f] = features[f]
-        output = self.encoder(features['t_bar'], features['v_bar'], features['t_bar_s'], features['v_bar_s'])
-        output = self.dropout(output)
-        output = self.classifier(output)
-        return output
     
     
 class DocFormer(nn.Module):
@@ -503,73 +533,12 @@ class DocFormer(nn.Module):
     def forward(self, x ,use_tdi=False):
         v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x,use_tdi)
         features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
-        for f in features:
-            features[f] = features[f]
         output = self.encoder(features['t_bar'], features['v_bar'], features['t_bar_s'], features['v_bar_s'])
         output = self.dropout(output)
         return output
 
-    
-    
-## Adding the code for the MLM + Image Reconstruction
-# The Shallow decoder can be modified as per the requirement
-
-# This is the code, which was basically used for the pretraining task of MLM + Image Reconstruction, the steps are as follows:
-# 1. Add the DocFormer Encoder
-# 2. Add a simple shallow decoder (and for that, I have used a vanilla convolution type network)
-
-class ShallowDecoder(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-        # decoder 
-        self.linear1 = nn.Linear(in_features = 768,out_features = 512)                        # Making the image to be symmetric
-        self.conv1 = nn.Conv2d(in_channels = 1, out_channels = 3,kernel_size = 3,stride = 1)
-        self.conv2 = nn.Conv2d(in_channels = 3, out_channels = 3,kernel_size = 3,stride = 1)
-
-        self.conv3 = nn.Conv2d(in_channels = 3, out_channels = 3,kernel_size = 5,stride = 1)
-        self.conv4 = nn.Conv2d(in_channels = 3, out_channels = 3,kernel_size = 5,stride = 2)
-
-        self.conv5 = nn.Conv2d(in_channels = 3, out_channels = 3,kernel_size = 7)
-        self.conv6 = nn.Conv2d(in_channels = 3, out_channels = 3,kernel_size = 7)
-
-        self.conv7 = nn.Conv2d(in_channels = 3, out_channels = 3,kernel_size = 7)
-        self.conv8 = nn.Conv2d(in_channels = 3, out_channels = 3,kernel_size = 7)
-
-        self.conv9 = nn.Conv2d(in_channels = 3, out_channels = 3,kernel_size = 3,stride = 1)
-
-    def forward(self, x):
-          x = x.unsqueeze(1).cuda()
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=1).cuda()(self.linear1(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv1(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv2(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv3(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv4(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv5(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv6(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv7(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv8(x)))
-          x = nn.ReLU()(torch.nn.BatchNorm2d(num_features=3).cuda()(self.conv9(x)))
-          return torch.sigmoid(x)
 
 
-class DocFormer_For_IR(nn.Module):
-    def __init__(self, config,num_classes= 30522):
-        super().__init__()
-        self.config = config
-        self.extract_feature = ExtractFeatures(config)
-        self.encoder = DocFormerEncoder(config)
-        self.dropout = nn.Dropout(config['hidden_dropout_prob'])
-        self.classifier = nn.Linear(in_features=68, out_features=num_classes)
-        self.decoder = ShallowDecoder().cuda()
 
-    def forward(self, x,use_tdi=False):
-        v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x,use_tdi)
-        features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
-        for f in features:
-            features[f] = features[f]
-        output = self.encoder(features['t_bar'], features['v_bar'], features['t_bar_s'], features['v_bar_s'])
-        output = self.dropout(output)
-        output_mlm = self.classifier(output)
-        output_ir = self.decoder(output) 
-        return {'mlm_labels':output_mlm,'ir':output_ir}
+
+
