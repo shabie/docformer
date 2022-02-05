@@ -138,7 +138,13 @@ class DocFormerEmbeddings(nn.Module):
         hidden_size = self.config["hidden_size"]
         num_feat = x_feature.shape[-1]
         sub_dim = hidden_size // num_feat
+        
+        # Clamping and adding a bias for handling negative values
+        x_feature[:,:,3:] = torch.clamp(x_feature[:,:,3:],-self.config["max_2d_position_embeddings"],self.config["max_2d_position_embeddings"])
+        x_feature[:,:,3:]+= self.config["max_2d_position_embeddings"]
 
+        y_feature[:,:,3:] = torch.clamp(y_feature[:,:,3:],-self.config["max_2d_position_embeddings"],self.config["max_2d_position_embeddings"])
+        y_feature[:,:,3:]+= self.config["max_2d_position_embeddings"]
         
         x_topleft_position_embeddings_v = self.x_topleft_position_embeddings_v(x_feature[:,:,0])
         x_bottomright_position_embeddings_v = self.x_bottomright_position_embeddings_v(x_feature[:,:,1])
