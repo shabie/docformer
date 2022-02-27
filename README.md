@@ -54,7 +54,7 @@ config = {
 fp = "filepath/to/the/image.tif"
 
 tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
-encoding = dataset.create_features(fp, tokenizer)
+encoding = dataset.create_features(fp, tokenizer, add_batch_dim=True)
 
 feature_extractor = modeling.ExtractFeatures(config)
 docformer = modeling.DocFormerEncoder(config)
