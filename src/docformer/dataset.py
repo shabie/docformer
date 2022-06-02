@@ -180,22 +180,30 @@ def create_features(
         save_to_disk=False,
         apply_mask_for_mlm=False,
         extras_for_debugging=False,
+        use_ocr = False,
+        bounding_box = None,
+        words = None
 ):
 
     # step 1: read original image and extract OCR entries
     original_image = Image.open(image).convert("RGB")
-    entries = apply_ocr(image)
+
+    if (use_ocr == False) and (bounding_box == None or words == None):
+        raise Exception('Please provide the bounding box and words or pass the argument "use_ocr" = True')
+
+    if use_ocr == True:
+      entries = apply_ocr(image)
+      bounding_box = entries["bbox"]
+      words = entries["words"]
 
     CLS_TOKEN_BOX = [0, 0, *original_image.size]    # Can be variable, but as per the paper, they have mentioned that it covers the whole image
     # step 2: resize image
     resized_image = original_image.resize(target_size)
-    unnormalized_word_boxes = entries["bbox"]
-    words = entries["words"]
 
     # step 3: normalize image to a grid of 1000 x 1000 (to avoid the problem of differently sized images)
     width, height = original_image.size
     normalized_word_boxes = [
-        normalize_box(bbox, width, height, GRID_SIZE) for bbox in unnormalized_word_boxes
+        normalize_box(bbox, width, height, GRID_SIZE) for bbox in bounding_box
     ]
     assert len(words) == len(normalized_word_boxes), "Length of words != Length of normalized words"
 
@@ -207,7 +215,7 @@ def create_features(
                          truncation=True,
                          add_special_tokens=False)
     
-    unnormalized_token_boxes = get_tokens_with_boxes(unnormalized_word_boxes,
+    unnormalized_token_boxes = get_tokens_with_boxes(bounding_box,
                                                                   PAD_TOKEN_BOX,
                                                                   encoding.word_ids())
 
