@@ -371,7 +371,7 @@ class MultiModalAttentionLayer(nn.Module):
             nn.Linear(embed_dim, embed_dim),
             nn.Dropout(dropout)
         )
-        self.scale = embed_dim**-0.5
+        self.scale = embed_dim**0.5
 
     def forward(self, text_feat, img_feat, text_spatial_feat, img_spatial_feat):
         text_feat = text_feat
