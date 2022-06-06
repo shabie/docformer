@@ -26,7 +26,7 @@ class PositionalEncoding(nn.Module):
 
 
 class ResNetFeatureExtractor(nn.Module):
-    def __init__(self):
+    def __init__(self, hidden_dim = 512):
         super().__init__()
 
         # Making the resnet 50 model, which was used in the docformer for the purpose of visual feature extraction
@@ -39,7 +39,7 @@ class ResNetFeatureExtractor(nn.Module):
 
         self.conv1 = nn.Conv2d(2048, 768, 1)
         self.relu1 = F.relu
-        self.linear1 = nn.Linear(192, 512)
+        self.linear1 = nn.Linear(192, hidden_dim)
 
     def forward(self, x):
         x = self.resnet50(x)
@@ -498,7 +498,7 @@ class ExtractFeatures(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.visual_feature = ResNetFeatureExtractor()
+        self.visual_feature = ResNetFeatureExtractor(hidden_dim = config['max_position_embeddings'])
         self.language_feature = LanguageFeatureExtractor()
         self.spatial_feature = DocFormerEmbeddings(config)
 
