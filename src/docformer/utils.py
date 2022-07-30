@@ -6,6 +6,8 @@ Created basically for the purpose of defining the labels for the unsupervised ta
 
 import numpy as np
 import random
+import json
+import os
 
 def labels_for_tdi(length,sample_ratio=0.05):
 
@@ -51,3 +53,20 @@ def labels_for_tdi(length,sample_ratio=0.05):
       labels = (arr==d_arr).astype(int)
 
       return d_arr,labels
+
+
+## Purpose: Reading the json file from the path and return the dictionary
+def load_json_file(file_path):
+  with open(file_path, 'r') as f:
+    data = json.load(f)
+  return data
+
+## Purpose: Getting the address of specific file type, eg: .pdf, .tif, so and so
+def get_specific_file(path, last_entry = 'tif'):
+  base_path = path
+  for i in os.listdir(path):
+    if i.endswith(last_entry):
+      return os.path.join(base_path, i)
+
+  return '-1'
+
