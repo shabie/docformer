@@ -180,7 +180,7 @@ def create_features(
         save_to_disk=False,
         apply_mask_for_mlm=False,
         extras_for_debugging=False,
-        use_ocr = False,
+        use_ocr = True,
         bounding_box = None,
         words = None
 ):
