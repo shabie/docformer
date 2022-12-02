@@ -64,8 +64,8 @@ from transformers import BertTokenizerFast
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-pdf_path = "/content/sample/pdfs"
-ocr_path = "/content/sample/OCR"
+pdf_path = "./sample/pdfs"
+ocr_path = "./sample/OCR"
 
 ## Image property
 
