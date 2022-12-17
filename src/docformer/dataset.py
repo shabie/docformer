@@ -83,7 +83,7 @@ def get_tokens_with_boxes(unnormalized_word_boxes, pad_token_box, word_ids,max_s
     if len(unnormalized_token_boxes)<max_seq_len:
         unnormalized_token_boxes.extend([pad_token_box] * (max_seq_len-len(unnormalized_token_boxes)))
         
-    return unnormalized_token_boxes
+    return unnormalized_token_boxes[:max_seq_len] ## maybe in case the length is higher than max_seq_len
 
 
 def get_centroid(actual_bbox):
