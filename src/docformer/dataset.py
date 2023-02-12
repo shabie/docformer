@@ -186,8 +186,11 @@ def create_features(
 ):
 
     # step 1: read original image and extract OCR entries
-    original_image = Image.open(image).convert("RGB")
-
+    try:   
+        original_image = Image.open(image).convert("RGB")
+    except:
+        original_image = Image.new(mode = "RGB", size = ((500, 500)), color = (255, 255, 255))
+        
     if (use_ocr == False) and (bounding_box == None or words == None):
         raise Exception('Please provide the bounding box and words or pass the argument "use_ocr" = True')
 
