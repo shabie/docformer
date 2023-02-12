@@ -531,7 +531,7 @@ class DocFormer(nn.Module):
         self.encoder = DocFormerEncoder(config)
         self.dropout = nn.Dropout(config['hidden_dropout_prob'])
 
-    def forward(self, x ,use_tdi=False):
+    def forward(self, x ):
         v_bar, t_bar, v_bar_s, t_bar_s = self.extract_feature(x,use_tdi)
         features = {'v_bar': v_bar, 't_bar': t_bar, 'v_bar_s': v_bar_s, 't_bar_s': t_bar_s}
         output = self.encoder(features['t_bar'], features['v_bar'], features['t_bar_s'], features['v_bar_s'])
