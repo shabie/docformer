@@ -8,6 +8,10 @@ DocFormer is a multi-modal transformer based architecture for the task of Visual
 
 The official implementation was not released by the authors.
 
+## NOTE:
+
+I tried to pre-train DocFormer on the task of MLM on a subset of [IDL Dataset](https://github.com/furkanbiten/idl_data). The weights are [here](https://www.kaggle.com/code/akarshu121/downloading-docformer-weights), and the associated kaggle notebook for fine-tuning on FUNSD is attached [here](https://www.kaggle.com/code/akarshu121/ckpt-docformer-for-token-classification-on-funsd/notebook?scriptVersionId=118952199)
+
 ## Install
 
 There might be some issues with the import of pytessaract, so in order to debug that, we need to write
